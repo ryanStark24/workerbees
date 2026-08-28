@@ -1,0 +1,31 @@
+name: WorkerBees validation
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell syntax
+        run: bash -n install.sh tests/*.sh
+      - name: Validate skill packages
+        run: ./tests/validate_skills.sh
+      - name: Validate safety invariants
+        run: ./tests/validate_skills.sh --safety-only
+      - name: Test installer behavior
+        run: ./tests/test_installer.sh
+      - name: Test routing scenarios
+        run: ./tests/test_routing_scenarios.sh
+      - name: Verify gate evidence
+        run: ./tests/test_gate_evidence.sh
