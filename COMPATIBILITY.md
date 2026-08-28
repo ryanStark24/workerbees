@@ -2,14 +2,14 @@
 
 WorkerBees uses directory-based Agent Skill packages. Filesystem installation and runtime discovery are different evidence surfaces: a successful copy does not prove that a particular host version discovered or invoked a skill.
 
-| Host | Supported installation layout | Current evidence | Runtime discovery |
-|---|---|---|---|
-| Cursor | `<project>/.cursor/skills/<skill>/SKILL.md` or `CURSOR_SKILLS_DIR` | Automated clean, update, conflict, and dry-run tests | `UNVERIFIED` without a supported Cursor executable in CI |
-| Google Antigravity IDE | `~/.gemini/config/skills/<skill>/SKILL.md` or `ANTIGRAVITY_SKILLS_DIR` | Automated clean, update, conflict, and dry-run tests | `UNVERIFIED` without an Antigravity IDE discovery harness |
-| Codex | `${CODEX_HOME:-~/.codex}/skills/<skill>/SKILL.md` | Automated clean, update, conflict, and dry-run tests | `UNVERIFIED` without a supported Codex discovery command in CI |
-| Claude Code | `${CLAUDE_HOME:-~/.claude}/skills/<skill>/SKILL.md` | Automated clean, update, conflict, and dry-run tests | `UNVERIFIED` without a supported Claude Code discovery command in CI |
+| Host | Project layout | Global layout | Current evidence | Runtime discovery |
+|---|---|---|---|---|
+| Cursor | `<project>/.cursor/skills/<skill>/SKILL.md` | `~/.cursor/skills/<skill>/SKILL.md` | Automated group, scope, clean, update, conflict, and dry-run tests | `UNVERIFIED` without a supported Cursor executable in CI |
+| Google Antigravity IDE | `<project>/.agents/skills/<skill>/SKILL.md` | `~/.gemini/config/skills/<skill>/SKILL.md` | Automated group, scope, clean, update, conflict, and dry-run tests | `UNVERIFIED` without an Antigravity IDE discovery harness |
+| Codex | `<project>/.agents/skills/<skill>/SKILL.md` | `~/.agents/skills/<skill>/SKILL.md` | Automated group, scope, clean, update, conflict, and dry-run tests | `UNVERIFIED` without a supported Codex discovery command in CI |
+| Claude Code | `<project>/.claude/skills/<skill>/SKILL.md` | `~/.claude/skills/<skill>/SKILL.md` | Automated group, scope, clean, update, conflict, and dry-run tests | `UNVERIFIED` without a supported Claude Code discovery command in CI |
 
-The Antigravity target above covers the Antigravity IDE global skill directory. Antigravity CLI plugin and global-skill layouts are versioned separately by Google and are not claimed as supported by this target.
+These paths were checked against current official host documentation on 2026-08-28: [Cursor Agent Skills](https://cursor.com/docs/skills), [Google Antigravity Skills](https://antigravity.google/docs/skills), [OpenAI Codex Skills](https://developers.openai.com/codex/skills/), and [Claude Code Skills](https://code.claude.com/docs/en/skills). Antigravity CLI plugin layouts are versioned separately by Google and are not claimed as supported by this target.
 
 ## Shell matrix
 

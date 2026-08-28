@@ -8,6 +8,9 @@ FORCE=0
 DRY_RUN=0
 INTERACTIVE=0
 TARGETS=()
+SELECTED_GROUPS=()
+SCOPES=()
+SCOPE_EXPLICIT=0
 
 usage() {
     cat <<'EOF'
@@ -19,21 +22,25 @@ Usage:
   ./install.sh                    # interactive selection
 
 Targets:
-  cursor       Native skills in <project>/.cursor/skills/
-  antigravity  Native skills in ~/.gemini/config/skills/
-  codex        Native skills in ${CODEX_HOME:-~/.codex}/skills/
-  claude       Native skills in ${CLAUDE_HOME:-~/.claude}/skills/
+  cursor       Cursor project or user skill directory.
+  antigravity  Antigravity workspace or global skill directory.
+  codex        Codex repository or user skill directory.
+  claude       Claude Code project or personal skill directory.
 
 Options:
   --all                  Install every target.
   --target TARGET        Install one target; may be repeated.
-  --project-dir PATH     Cursor project directory (default: current directory).
+  --group GROUP          Install general, salesforce, or all skills; may be repeated (default: all).
+  --scope SCOPE          Install at project or global scope; may be repeated.
+                         Without this flag, Cursor uses project scope and other targets use global scope.
+  --project-dir PATH     Project/workspace root for project scope (default: current directory).
   --force                Replace differing WorkerBees-managed files.
   --dry-run              Print intended changes without writing.
   -h, --help             Show this help.
 
 Environment overrides:
   CURSOR_SKILLS_DIR, ANTIGRAVITY_SKILLS_DIR, CODEX_HOME, CLAUDE_HOME
+  <TARGET>_PROJECT_SKILLS_DIR and <TARGET>_GLOBAL_SKILLS_DIR
 EOF
 }
 
@@ -55,6 +62,37 @@ add_target() {
     TARGETS+=("$candidate")
 }
 
+add_group() {
+    local candidate=$1
+    local existing
+    case "$candidate" in
+        all)
+            add_group general
+            add_group salesforce
+            return 0
+            ;;
+        general|salesforce) ;;
+        *) die "Unknown group: $candidate" ;;
+    esac
+    for existing in "${SELECTED_GROUPS[@]:-}"; do
+        [ "$existing" = "$candidate" ] && return 0
+    done
+    SELECTED_GROUPS+=("$candidate")
+}
+
+add_scope() {
+    local candidate=$1
+    local existing
+    case "$candidate" in
+        project|global) ;;
+        *) die "Unknown scope: $candidate" ;;
+    esac
+    for existing in "${SCOPES[@]:-}"; do
+        [ "$existing" = "$candidate" ] && return 0
+    done
+    SCOPES+=("$candidate")
+}
+
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --all)
@@ -67,6 +105,17 @@ while [ "$#" -gt 0 ]; do
         --target)
             [ "$#" -ge 2 ] || die "--target requires a value"
             add_target "$2"
+            shift 2
+            ;;
+        --group)
+            [ "$#" -ge 2 ] || die "--group requires a value"
+            add_group "$2"
+            shift 2
+            ;;
+        --scope)
+            [ "$#" -ge 2 ] || die "--scope requires a value"
+            SCOPE_EXPLICIT=1
+            add_scope "$2"
             shift 2
             ;;
         --project-dir)
@@ -92,6 +141,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+[ "${#SELECTED_GROUPS[@]}" -gt 0 ] || add_group all
+
 if [ "${#TARGETS[@]}" -eq 0 ]; then
     [ -t 0 ] || die "No target selected. Use --target or --all."
     INTERACTIVE=1
@@ -107,6 +158,8 @@ if [ "${#TARGETS[@]}" -eq 0 ]; then
 fi
 
 [ -d "$SOURCE_DIR" ] || die "Skill source directory not found: $SOURCE_DIR"
+[ -d "$SOURCE_DIR/general" ] || die "General skill source directory not found: $SOURCE_DIR/general"
+[ -d "$SOURCE_DIR/salesforce" ] || die "Salesforce skill source directory not found: $SOURCE_DIR/salesforce"
 
 frontmatter_value() {
     local key=$1
@@ -285,38 +338,95 @@ target_requested() {
     return 1
 }
 
-CURSOR_ROOT=${CURSOR_SKILLS_DIR:-"$PROJECT_DIR/.cursor/skills"}
-ANTIGRAVITY_ROOT=${ANTIGRAVITY_SKILLS_DIR:-"$HOME/.gemini/config/skills"}
-CODEX_ROOT=${CODEX_HOME:-"$HOME/.codex"}
-CLAUDE_ROOT=${CLAUDE_HOME:-"$HOME/.claude"}
+group_requested() {
+    local wanted=$1
+    local group
+    for group in "${SELECTED_GROUPS[@]}"; do
+        [ "$group" = "$wanted" ] && return 0
+    done
+    return 1
+}
+
+scope_requested() {
+    local target=$1
+    local wanted=$2
+    local scope
+    if [ "$SCOPE_EXPLICIT" -eq 0 ]; then
+        if [ "$target" = cursor ]; then
+            [ "$wanted" = project ]
+        else
+            [ "$wanted" = global ]
+        fi
+        return
+    fi
+    for scope in "${SCOPES[@]}"; do
+        [ "$scope" = "$wanted" ] && return 0
+    done
+    return 1
+}
+
+CURSOR_PROJECT_ROOT=${CURSOR_PROJECT_SKILLS_DIR:-${CURSOR_SKILLS_DIR:-"$PROJECT_DIR/.cursor/skills"}}
+CURSOR_GLOBAL_ROOT=${CURSOR_GLOBAL_SKILLS_DIR:-${CURSOR_SKILLS_DIR:-"$HOME/.cursor/skills"}}
+ANTIGRAVITY_PROJECT_ROOT=${ANTIGRAVITY_PROJECT_SKILLS_DIR:-"$PROJECT_DIR/.agents/skills"}
+ANTIGRAVITY_GLOBAL_ROOT=${ANTIGRAVITY_GLOBAL_SKILLS_DIR:-${ANTIGRAVITY_SKILLS_DIR:-"$HOME/.gemini/config/skills"}}
+CODEX_PROJECT_ROOT=${CODEX_PROJECT_SKILLS_DIR:-"$PROJECT_DIR/.agents/skills"}
+if [ -n "${CODEX_GLOBAL_SKILLS_DIR:-}" ]; then
+    CODEX_GLOBAL_ROOT=$CODEX_GLOBAL_SKILLS_DIR
+elif [ -n "${CODEX_HOME:-}" ]; then
+    CODEX_GLOBAL_ROOT="$CODEX_HOME/skills"
+else
+    CODEX_GLOBAL_ROOT="$HOME/.agents/skills"
+fi
+CLAUDE_PROJECT_ROOT=${CLAUDE_PROJECT_SKILLS_DIR:-"$PROJECT_DIR/.claude/skills"}
+CLAUDE_GLOBAL_ROOT=${CLAUDE_GLOBAL_SKILLS_DIR:-${CLAUDE_HOME:-"$HOME/.claude"}/skills}
 
 WORK_SOURCES=()
 WORK_DESTINATIONS=()
 
 queue_package() {
-    WORK_SOURCES+=("$1")
-    WORK_DESTINATIONS+=("$2")
+    local source=$1
+    local destination=$2
+    local index
+    for ((index = 0; index < ${#WORK_DESTINATIONS[@]}; index++)); do
+        if [ "${WORK_DESTINATIONS[$index]}" = "$destination" ]; then
+            [ "${WORK_SOURCES[$index]}" = "$source" ] || die "Two packages resolve to the same destination: $destination"
+            return 0
+        fi
+    done
+    WORK_SOURCES+=("$source")
+    WORK_DESTINATIONS+=("$destination")
 }
 
 skill_count=0
-for package_dir in "$SOURCE_DIR"/*; do
-    [ -d "$package_dir" ] || continue
+SKILL_NAMES=()
+while IFS= read -r entrypoint; do
+    package_dir=${entrypoint%/SKILL.md}
     validate_source_package "$package_dir"
+    category=$(basename -- "$(dirname -- "$package_dir")")
+    group_requested "$category" || continue
     skill_count=$((skill_count + 1))
     skill_name=$(basename -- "$package_dir")
+    for existing_skill_name in "${SKILL_NAMES[@]:-}"; do
+        [ "$existing_skill_name" != "$skill_name" ] || die "Duplicate skill package name: $skill_name"
+    done
+    SKILL_NAMES+=("$skill_name")
     if target_requested cursor; then
-        queue_package "$package_dir" "$CURSOR_ROOT/$skill_name"
+        scope_requested cursor project && queue_package "$package_dir" "$CURSOR_PROJECT_ROOT/$skill_name"
+        scope_requested cursor global && queue_package "$package_dir" "$CURSOR_GLOBAL_ROOT/$skill_name"
     fi
     if target_requested antigravity; then
-        queue_package "$package_dir" "$ANTIGRAVITY_ROOT/$skill_name"
+        scope_requested antigravity project && queue_package "$package_dir" "$ANTIGRAVITY_PROJECT_ROOT/$skill_name"
+        scope_requested antigravity global && queue_package "$package_dir" "$ANTIGRAVITY_GLOBAL_ROOT/$skill_name"
     fi
     if target_requested codex; then
-        queue_package "$package_dir" "$CODEX_ROOT/skills/$skill_name"
+        scope_requested codex project && queue_package "$package_dir" "$CODEX_PROJECT_ROOT/$skill_name"
+        scope_requested codex global && queue_package "$package_dir" "$CODEX_GLOBAL_ROOT/$skill_name"
     fi
     if target_requested claude; then
-        queue_package "$package_dir" "$CLAUDE_ROOT/skills/$skill_name"
+        scope_requested claude project && queue_package "$package_dir" "$CLAUDE_PROJECT_ROOT/$skill_name"
+        scope_requested claude global && queue_package "$package_dir" "$CLAUDE_GLOBAL_ROOT/$skill_name"
     fi
-done
+done < <(find "$SOURCE_DIR" -mindepth 3 -maxdepth 3 -type f -name SKILL.md -print | LC_ALL=C sort)
 
 [ "$skill_count" -gt 0 ] || die "No skill packages found in $SOURCE_DIR"
 

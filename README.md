@@ -6,7 +6,7 @@ WorkerBees is a portable collection of evidence-gated orchestration skills for c
 
 WorkerBees contains **23 skill packages** in the native directory format: 11 vendor-neutral lifecycle skills, 11 dedicated Salesforce OmniStudio/Vlocity counterparts, and one shared OmniStudio environment router.
 
-### Core lifecycle skills
+### General lifecycle skills
 
 | Skill | Specialty |
 |---|---|
@@ -48,7 +48,15 @@ All 11 lifecycle variants load that router and their shipped core counterpart. T
 
 The migration variant uses the current OmniStudio Migration Assistant Assess/Migrate workflow, separates automated and manual conversion, and requires behavioral-equivalence evidence in a clean validation sandbox. ETL owns business-record movement only; configuration, DataPack, metadata, designer, and runtime conversion belong to migration.
 
-Every package uses the native directory shape `skills/<skill-name>/SKILL.md`.
+The repository groups source packages by domain:
+
+```text
+skills/
+├── general/<skill-name>/SKILL.md
+└── salesforce/<skill-name>/SKILL.md
+```
+
+The categories are repository organization only. The installer places each package directly at the host's native `<skills-root>/<skill-name>/SKILL.md` location so automatic discovery remains compatible.
 
 ## Installation
 
@@ -67,6 +75,24 @@ Install one or more targets:
 ./install.sh --target claude --target antigravity
 ./install.sh --target cursor --project-dir /path/to/project
 ```
+
+Choose which skill family to install:
+
+```bash
+./install.sh --target codex --group general
+./install.sh --target codex --group salesforce
+./install.sh --target codex --group general --group salesforce
+```
+
+Choose project scope, global scope, or both:
+
+```bash
+./install.sh --all --group salesforce --scope project --project-dir /path/to/project
+./install.sh --all --group general --scope global
+./install.sh --target cursor --group all --scope project --scope global --project-dir /path/to/project
+```
+
+`--group all` is the default. If `--scope` is omitted, the backward-compatible defaults apply: Cursor installs into the project and Antigravity, Codex, and Claude Code install globally.
 
 Install all targets:
 
@@ -88,12 +114,12 @@ Update an existing WorkerBees installation only after reviewing local difference
 
 ### Target layouts
 
-| Target | Installed layout |
-|---|---|
-| Cursor | `${CURSOR_SKILLS_DIR:-<project>/.cursor/skills}/<skill-name>/SKILL.md` |
-| Antigravity | `${ANTIGRAVITY_SKILLS_DIR:-~/.gemini/config/skills}/<skill-name>/SKILL.md` |
-| Codex | `${CODEX_HOME:-~/.codex}/skills/<skill-name>/SKILL.md` |
-| Claude Code | `${CLAUDE_HOME:-~/.claude}/skills/<skill-name>/SKILL.md` |
+| Target | Project scope | Global scope |
+|---|---|---|
+| Cursor | `<project>/.cursor/skills/<skill-name>/SKILL.md` | `~/.cursor/skills/<skill-name>/SKILL.md` |
+| Antigravity | `<project>/.agents/skills/<skill-name>/SKILL.md` | `~/.gemini/config/skills/<skill-name>/SKILL.md` |
+| Codex | `<project>/.agents/skills/<skill-name>/SKILL.md` | `~/.agents/skills/<skill-name>/SKILL.md` |
+| Claude Code | `<project>/.claude/skills/<skill-name>/SKILL.md` | `~/.claude/skills/<skill-name>/SKILL.md` |
 
 All four targets receive the same canonical directory-based skill packages. Cursor can also use a global directory by setting `CURSOR_SKILLS_DIR=~/.cursor/skills`.
 
@@ -104,13 +130,15 @@ See [COMPATIBILITY.md](COMPATIBILITY.md) for the distinction between filesystem 
 ```text
 --all
 --target cursor|antigravity|codex|claude
+--group general|salesforce|all
+--scope project|global
 --project-dir PATH
 --force
 --dry-run
 --help
 ```
 
-`--target` may be repeated. `CURSOR_SKILLS_DIR`, `ANTIGRAVITY_SKILLS_DIR`, `CODEX_HOME`, and `CLAUDE_HOME` can override installation locations.
+`--target`, `--group`, and `--scope` may be repeated. Target-specific `<TARGET>_PROJECT_SKILLS_DIR` and `<TARGET>_GLOBAL_SKILLS_DIR` variables override scoped destinations. The legacy `CURSOR_SKILLS_DIR`, `ANTIGRAVITY_SKILLS_DIR`, `CODEX_HOME`, and `CLAUDE_HOME` overrides remain supported.
 
 ## Validation
 
@@ -125,7 +153,7 @@ bash -n install.sh tests/*.sh
 ./tests/test_gate_evidence.sh
 ```
 
-The checks validate all 23 native packages and their safety invariants. The routing suite exercises standard-native, managed-legacy, managed-standard-model, explicitly resolved mixed lanes, blocked mixed metadata, contradictory observations, unknown and malformed facts, metadata mismatch, and authorized/unauthorized mutation scenarios. The installer test exercises all four targets from outside the repository directory, compares complete package trees including executable modes, verifies symlink and conflict refusal, stale-file cleanup, transactional conflict preflight, forced updates, and dry-run behavior.
+The checks validate all 23 native packages and their safety invariants. The routing suite exercises standard-native, managed-legacy, managed-standard-model, explicitly resolved mixed lanes, blocked mixed metadata, contradictory observations, unknown and malformed facts, metadata mismatch, and authorized/unauthorized mutation scenarios. The installer test exercises general-only, Salesforce-only, project, global, and combined-scope installation across all four targets. It also compares complete package trees including executable modes and verifies symlink and conflict refusal, stale-file cleanup, transactional conflict preflight, forced updates, and dry-run behavior.
 
 ## Release status
 

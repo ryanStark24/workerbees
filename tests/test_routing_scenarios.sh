@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-CLASSIFIER="$REPO_DIR/skills/salesforce-omnistudio-environment-router/scripts/classify_environment.py"
+CLASSIFIER="$REPO_DIR/skills/salesforce/salesforce-omnistudio-environment-router/scripts/classify_environment.py"
 
 fail() {
     printf 'FAIL: %s\n' "$*" >&2

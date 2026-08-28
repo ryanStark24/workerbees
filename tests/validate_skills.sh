@@ -43,11 +43,18 @@ names_file=$(mktemp "${TMPDIR:-/tmp}/workerbees-names.XXXXXX")
 descriptions_file=$(mktemp "${TMPDIR:-/tmp}/workerbees-descriptions.XXXXXX")
 trap 'rm -f -- "$names_file" "$descriptions_file"' EXIT
 
-for package_dir in "$SKILLS_DIR"/*; do
-    [ -d "$package_dir" ] || continue
-    file="$package_dir/SKILL.md"
+while IFS= read -r file; do
+    package_dir=${file%/SKILL.md}
     [ -f "$file" ] || fail "missing SKILL.md: $package_dir"
     folder_name=$(basename -- "$package_dir")
+    category=$(basename -- "$(dirname -- "$package_dir")")
+    case "$category:$folder_name" in
+        general:salesforce-*) fail "Salesforce skill is misplaced in general category: $package_dir" ;;
+        salesforce:salesforce-*) ;;
+        salesforce:*) fail "Non-Salesforce skill is misplaced in Salesforce category: $package_dir" ;;
+        general:*) ;;
+        *) fail "unknown skill category: $category" ;;
+    esac
 
     if [ "$MODE" = "--safety-only" ]; then
         case "$folder_name" in
@@ -96,7 +103,7 @@ for package_dir in "$SKILLS_DIR"/*; do
             esac
             ;;
     esac
-done
+done < <(find "$SKILLS_DIR" -mindepth 3 -maxdepth 3 -type f -name SKILL.md -print | LC_ALL=C sort)
 
 if [ "$MODE" = "--safety-only" ]; then
     printf 'PASS: safety invariants validated\n'
@@ -109,21 +116,21 @@ fi
 [ "$(sort "$names_file" | uniq -d | wc -l | tr -d ' ')" -eq 0 ] || fail "duplicate skill names"
 [ "$(sort "$descriptions_file" | uniq -d | wc -l | tr -d ' ')" -eq 0 ] || fail "duplicate skill descriptions"
 
-router_dir="$SKILLS_DIR/salesforce-omnistudio-environment-router"
+router_dir="$SKILLS_DIR/salesforce/salesforce-omnistudio-environment-router"
 [ -f "$router_dir/references/native-standard-lane.md" ] || fail "missing native/standard runtime guide"
 [ -f "$router_dir/references/legacy-datapack-lane.md" ] || fail "missing managed legacy/DataPack guide"
 [ -x "$router_dir/scripts/classify_environment.py" ] || fail "environment classifier is not executable"
 
 for core_name in architecture-decision data-etl migration performance-capacity privacy-compliance release-cutover reliability-recovery security-audit system-reconstruction; do
-    core_file="$SKILLS_DIR/$core_name-lead-orchestrator/SKILL.md"
+    core_file="$SKILLS_DIR/general/$core_name-lead-orchestrator/SKILL.md"
     grep -q 'swarm-lead-orchestrator' "$core_file" || fail "core lifecycle skill does not compose with swarm: $core_file"
     grep -Eiq 'sequential' "$core_file" || fail "core lifecycle skill lacks sequential fallback: $core_file"
     grep -Eiq 'collision|contend|shared resource' "$core_file" || fail "core lifecycle skill lacks resource-collision guidance: $core_file"
 done
 
-grep -q 'OMA \*\*Assess\*\*' "$SKILLS_DIR/salesforce-omnistudio-migration-lead-orchestrator/SKILL.md" || fail "migration skill lacks OMA Assess gate"
-grep -q 'separate clean validation sandbox' "$SKILLS_DIR/salesforce-omnistudio-migration-lead-orchestrator/SKILL.md" || fail "migration skill lacks independent validation sandbox"
-grep -q 'business-record ETL' "$SKILLS_DIR/salesforce-omnistudio-data-etl-lead-orchestrator/SKILL.md" || fail "OmniStudio ETL ownership is ambiguous"
+grep -q 'OMA \*\*Assess\*\*' "$SKILLS_DIR/salesforce/salesforce-omnistudio-migration-lead-orchestrator/SKILL.md" || fail "migration skill lacks OMA Assess gate"
+grep -q 'separate clean validation sandbox' "$SKILLS_DIR/salesforce/salesforce-omnistudio-migration-lead-orchestrator/SKILL.md" || fail "migration skill lacks independent validation sandbox"
+grep -q 'business-record ETL' "$SKILLS_DIR/salesforce/salesforce-omnistudio-data-etl-lead-orchestrator/SKILL.md" || fail "OmniStudio ETL ownership is ambiguous"
 grep -Eq 'Omni Process Compilation.*Read and Edit' "$router_dir/SKILL.md" || fail "router lacks exact Omni Process Compilation baseline grant"
 grep -Eq 'Omni Data Transformation.*Read' "$router_dir/SKILL.md" || fail "router lacks exact Omni Data Transformation baseline grant"
 grep -Eq 'OmniScript Saved Sessions.*Read and Edit' "$router_dir/SKILL.md" || fail "router lacks exact OmniScript Saved Sessions baseline grant"
