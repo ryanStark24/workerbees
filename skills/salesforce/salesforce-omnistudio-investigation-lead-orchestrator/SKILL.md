@@ -2,7 +2,7 @@
 name: salesforce-omnistudio-investigation-lead-orchestrator
 description: Investigate Salesforce OmniStudio and legacy Vlocity failures across OmniScripts, FlexCards, Data Mappers or DataRaptors, Integration Procedures, packages, and runtime composition. Use only for OmniStudio-domain incidents or debugging; do not use for generic Salesforce or vendor-neutral investigations.
 metadata:
-  version: 1.1.0
+  version: 1.2.0
   author: Swarm Architecture Working Group
   status: Candidate
 ---
@@ -12,6 +12,8 @@ metadata:
 ## Required composition
 
 Locate and read the complete `salesforce-omnistudio-environment-router` package first, including every reference selected by its classification. Then locate and read the complete shipped `investigation-lead-orchestrator` core skill for hypothesis management, evidence trajectories, causal connection, contradiction handling, and integration. If either package is unavailable, report it and continue self-contained and sequentially: fingerprint and classify; reproduce safely; enumerate competing hypotheses; run bounded discriminating checks; connect cause to incident; audit evidence; then propose remediation. Do not pretend a missing skill was loaded.
+
+Before generic discovery, inspect applicable repository instructions and project-native investigation skills or commands. Prefer them for org selection, live-data access, domain-specific tracing, correlation, and evidence capture; use this OmniStudio skill to fill only the gaps they do not cover, especially runtime, storage/object-family, JSON, and transport ambiguity. Project-native allowlists and safety/evidence rules remain hard constraints.
 
 Optional `sf-architect-*` complements are capability supplements, never dependencies. Load one only after the traced boundary requires UI, Apex, integration, DevOps, ETL, security, or performance expertise; record its exact name/path and version/source provenance and read it completely. If absent, apply the corresponding checks in this skill sequentially.
 
@@ -44,18 +46,18 @@ Record org alias and ID, org type, Salesforce release/API version, OmniStudio li
 
 Inspect the host's available skill catalog before loading a complement. Loading means reading that available skill's complete `SKILL.md` before continuing. Load only those required by the observed execution path, and report unavailable complements rather than pretending they were used.
 
-| Observed boundary | Complement to load when available |
-|---|---|
-| Standard metadata retrieval, source tracking, activation drift, package or deployment failure | `sf-architect-devops` |
-| OmniScript/FlexCard rendering, generated LWC, page binding, browser, accessibility | `sf-architect-ui` |
-| Integration Procedure HTTP actions, Named Credentials, authentication, downstream APIs | `sf-architect-integrations` |
-| Data Mapper/DataRaptor transformation plus business-record loading or reconciliation | capability `Salesforce ETL`; optionally `sf-architect-etl` |
-| Remote Action, Apex exception, governor or transaction behavior | `sf-architect-apex` |
-| CRUD/FLS, sharing, guest access, injection, secret or data exposure | `sf-architect-security` or `salesforce-omnistudio-security-audit-lead-orchestrator` |
-| Latency, payload size, cache, concurrency, limits | `sf-architect-performance` or `salesforce-omnistudio-performance-capacity-lead-orchestrator` |
-| Migration | `salesforce-omnistudio-migration-lead-orchestrator` |
-| Partial release or rollback | `salesforce-omnistudio-release-cutover-lead-orchestrator` |
-| Retry, degraded operation, or recovery | `salesforce-omnistudio-reliability-recovery-lead-orchestrator` |
+| Observed boundary | Required capability | Optional examples when actually available |
+|---|---|---|
+| Standard metadata retrieval, source tracking, activation drift, package or deployment failure | Project-native Salesforce deployment and source-provenance workflow | `sf-architect-devops` |
+| OmniScript/FlexCard rendering, generated LWC, page binding, browser, accessibility | Salesforce UI and live-browser investigation | `sf-architect-ui` |
+| Integration Procedure HTTP actions, Named Credentials, authentication, downstream APIs | Salesforce integration tracing | `sf-architect-integrations` |
+| Data Mapper/DataRaptor transformation plus business-record loading or reconciliation | Salesforce ETL and reconciliation | `sf-architect-etl` |
+| Remote Action, Apex exception, governor or transaction behavior | Apex transaction and limit analysis | `sf-architect-apex` |
+| CRUD/FLS, sharing, guest access, injection, secret or data exposure | Salesforce security analysis | `sf-architect-security` or `salesforce-omnistudio-security-audit-lead-orchestrator` |
+| Latency, payload size, cache, concurrency, limits | Salesforce performance analysis | `sf-architect-performance` or `salesforce-omnistudio-performance-capacity-lead-orchestrator` |
+| Migration | OmniStudio asset/runtime migration | `salesforce-omnistudio-migration-lead-orchestrator` |
+| Partial release or rollback | OmniStudio release and recovery | `salesforce-omnistudio-release-cutover-lead-orchestrator` |
+| Retry, degraded operation, or recovery | OmniStudio reliability and recovery | `salesforce-omnistudio-reliability-recovery-lead-orchestrator` |
 
 This skill owns the OmniStudio runtime/object/JSON interpretation. Complementary skills add their specialist discipline; they must not replace the detected environment model or broaden authorization.
 

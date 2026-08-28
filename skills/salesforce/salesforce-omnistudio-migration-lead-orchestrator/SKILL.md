@@ -1,13 +1,17 @@
 ---
 name: salesforce-omnistudio-migration-lead-orchestrator
-description: Coordinate Salesforce OmniStudio and legacy Vlocity migrations across managed-package and Standard/Core runtimes, designers, DataPacks, metadata, component versions, and channels. Use only for OmniStudio runtime modernization or asset migration; do not use for general Salesforce metadata or data migration.
+description: Coordinate Salesforce OmniStudio and legacy Vlocity migrations across managed-package and Standard/Core runtimes, designers, DataPacks, metadata, component versions, and channels. Use only when OmniStudio runtime modernization or asset migration is central; route provisioning-system, business-logic, or data-source migrations elsewhere, and do not use for generic Salesforce migration.
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   author: Swarm Architecture Working Group
   status: Candidate
 ---
 
 # Salesforce OmniStudio Migration Lead Orchestrator
+
+## Scope route before OmniStudio tooling
+
+First identify what is actually migrating. If the change replaces a provisioning system, business-logic implementation, service, integration data source, or record source without converting OmniStudio assets, runtime, designer, object model, or deployment representation, stop this specialized workflow. Prefer an applicable project-native migration skill; otherwise use `migration-lead-orchestrator`, delegating bounded record movement to `data-etl-lead-orchestrator` when appropriate. Do not introduce OMA, DataPack conversion, or managed-to-standard runtime parity gates merely because the surrounding repository or target platform is Salesforce.
 
 ## Required composition
 

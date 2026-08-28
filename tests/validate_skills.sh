@@ -136,4 +136,22 @@ grep -Eq 'Omni Data Transformation.*Read' "$router_dir/SKILL.md" || fail "router
 grep -Eq 'OmniScript Saved Sessions.*Read and Edit' "$router_dir/SKILL.md" || fail "router lacks exact OmniScript Saved Sessions baseline grant"
 grep -q 'VlocityDataPack__c' "$router_dir/references/legacy-datapack-lane.md" || fail "legacy lane lacks optional DataPack object discovery mapping"
 
+sf_migration="$SKILLS_DIR/salesforce/salesforce-omnistudio-migration-lead-orchestrator/SKILL.md"
+general_release="$SKILLS_DIR/general/release-cutover-lead-orchestrator/SKILL.md"
+sf_release="$SKILLS_DIR/salesforce/salesforce-omnistudio-release-cutover-lead-orchestrator/SKILL.md"
+general_investigation="$SKILLS_DIR/general/investigation-lead-orchestrator/SKILL.md"
+sf_investigation="$SKILLS_DIR/salesforce/salesforce-omnistudio-investigation-lead-orchestrator/SKILL.md"
+
+grep -Eiq 'provisioning system|provisioning-system' "$sf_migration" || fail "OmniStudio migration lacks non-Omni provisioning route"
+grep -q 'migration-lead-orchestrator' "$sf_migration" || fail "OmniStudio migration does not route non-Omni migration to the general lead"
+for release_file in "$general_release" "$sf_release"; do
+    grep -Eiq 'repository instructions' "$release_file" || fail "release skill lacks repository-policy precedence: $release_file"
+    grep -Eiq 'retrieve-and-diff' "$release_file" || fail "release skill lacks retrieve-and-diff gate: $release_file"
+    grep -Eiq 'allowlist' "$release_file" || fail "release skill lacks target allowlist gate: $release_file"
+done
+for investigation_file in "$general_investigation" "$sf_investigation"; do
+    grep -Eiq 'project-native investigation' "$investigation_file" || fail "investigation skill does not prefer project-native capabilities: $investigation_file"
+done
+grep -q 'Required capability' "$sf_investigation" || fail "OmniStudio investigation complement routing is not capability-first"
+
 printf 'PASS: 23 skill packages validated\n'

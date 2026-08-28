@@ -2,7 +2,7 @@
 name: salesforce-omnistudio-release-cutover-lead-orchestrator
 description: Coordinate release, deployment, activation, cutover, and rollback for Salesforce OmniStudio and legacy Vlocity solutions. Use only when OmniStudio assets and their runtime-specific transport are central; do not use for generic Salesforce releases or vendor-neutral deployment work.
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   author: Swarm Architecture Working Group
   status: Candidate
 ---
@@ -24,6 +24,8 @@ Data Mapper versus legacy DataRaptor terminology and the word Vlocity do not pro
 ## Authorization boundary
 
 Require explicit approval for each target org, deployment, asset activation/deactivation, page reassignment, cache operation, runtime/designer toggle, package change, business-data mutation, and rollback. Prepare and validate read-only plans freely; do not enter the production change window without named authority and stop conditions.
+
+Before selecting an org, manifest, command, or test level, read and defer to applicable repository instructions and project-native Salesforce deployment skills. Repository allowlists, retrieve-and-diff gates, exact-org confirmation, targeted-test policies, deployment-scope limits, and prohibited-command rules are mandatory even when this skill's generic readiness gates pass. Preserve the stricter rule when policies overlap; contradictory or unavailable required policy is `BLOCKED`, never permission to improvise a broader deployment.
 
 ## Release manifest
 

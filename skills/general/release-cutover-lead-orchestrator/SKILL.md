@@ -2,7 +2,7 @@
 name: release-cutover-lead-orchestrator
 description: Coordinate release readiness, phased rollout, cutover, rollback, hypercare, and evidence-based go or no-go decisions. Use when a consequential change crosses environments or user populations; do not use for ordinary local builds or deployment execution without release authority.
 metadata:
-  version: 1.1.0
+  version: 1.2.0
   author: Swarm Architecture Working Group
   status: Candidate
 ---
@@ -20,6 +20,8 @@ If the swarm skill or workers are unavailable, execute the readiness graph seque
 ## Authorization boundary
 
 Planning and validation do not authorize deployment, traffic changes, feature enablement, schema mutation, source freeze, rollback, or external communication. Record who owns each go/no-go and mutation decision.
+
+Before defining or executing a release, discover and read the applicable repository instructions and project-native deployment or release skills, including files such as `AGENTS.md`, `CLAUDE.md`, contribution guidance, environment runbooks, and CI/deployment policy. Treat their stricter constraints as hard gates: permitted orgs/environments, exact-target allowlists, retrieve-and-diff requirements, manifest scope, required test selection, confirmation timing, and prohibited commands override this generic workflow. A broad release approval never substitutes for an exact confirmation required by the repository. If applicable policy is contradictory, unavailable, or cannot be satisfied, report `BLOCKED`; do not fall back to a broader generic deploy path.
 
 ## Outcomes
 

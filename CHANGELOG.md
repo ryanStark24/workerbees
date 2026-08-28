@@ -4,6 +4,7 @@
 
 - Organized source packages into `skills/general/` and `skills/salesforce/` while preserving flat host-native installation layouts.
 - Added independently selectable `general` and `salesforce` installer groups plus explicit project and global scopes.
+- Added project-native policy precedence for migration routing, release safety, and investigations; complement selection is now capability-first.
 
 - Package lifecycle and Salesforce OmniStudio orchestration skills in native directory form.
 - Install packages for Cursor, Google Antigravity IDE, Codex, and Claude Code.
