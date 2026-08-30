@@ -50,6 +50,7 @@ if unknown:
 # a requirement -- including the `Req: none (reason)` commits that only edit its
 # text -- which is the exact mis-attribution wb_trace.parse_commits exists to
 # avoid. One rule, one implementation.
+sys.dont_write_bytecode = True  # keep __pycache__ out of the skill package
 sys.path.insert(0, os.path.join(
     repo, "skills/discipline/requirements-traceability-auditor/scripts"))
 import wb_trace
