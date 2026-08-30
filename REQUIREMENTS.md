@@ -107,6 +107,59 @@ each one but no commit names it. That is accurate, not a defect.
   gates, and every path, with no evidence of need. Reconsider only after a
   concrete selection problem is observed.
 
+## Milestone 3 — are these skills actually worth having?
+
+**Defined:** 2026-08-30 · **Frozen at:** PENDING_M3_COMMIT
+**Core Value:** Every shipped skill is known to be selected when it is relevant
+and to change what an agent does — or it is deleted.
+
+Why this milestone exists: 25 gates prove structure — files exist, frontmatter
+parses, composition strings are present. **None prove a model would ever select a
+skill, or that following one changes any output.** Existence was made rigorously
+measurable while value went unmeasured. Measured signal: every WorkerBees skill
+appears in exactly 1 of 1010 session transcripts (this session's own), against
+978 for `brainstorming`, `test-driven-development`, and `sf-architect-apex`; and
+only 1 of 23 packages is installed anywhere an agent can see it. The pack is two
+days old, so this is weak evidence of failure but zero evidence of value.
+
+- [ ] **R-015**: Every skill is selected by a model when given realistic task
+      descriptions from its stated domain, measured by an eval suite rather than
+      by inspection of its description.
+- [ ] **R-016**: Every skill demonstrably changes agent behaviour: for a task in
+      its domain, output produced while following it differs in a stated,
+      reviewable way from output produced without it.
+- [ ] **R-017**: Skill descriptions route on concrete triggers rather than a
+      subjective size judgement the model must make first, and no skill's
+      selection surface is indistinguishable from a sibling's.
+- [ ] **R-018**: Any skill that fails R-015 or R-016 is deleted or merged, and
+      the removal is recorded. A skill that is never selected is worse than
+      absent: it carries maintenance cost at zero value.
+
+### M3 non-goals
+
+- Rewriting skill *content* for quality. This milestone measures selection and
+  behavioural effect, not domain correctness.
+- Adding new skills. M3 may only reduce the set.
+
+## Milestone 1 — residual work (not covered by R-001..R-005)
+
+R-001 through R-005 are `DONE`: each has commits, a gate, and pasted evidence.
+That is delivery evidence, **not** landing or field validation. These items were
+never written as requirements, which is itself the finding.
+
+- [ ] **R-019**: The M1 change is landed through this project's merge gate — pull
+      request, internal code review, and independent technical *and* functional
+      review — with every gate reported as run rather than assumed.
+- [ ] **R-020**: The gate suite is proven to reproduce on a machine that has
+      never seen this project, by CI executing on both platforms. Never yet run:
+      the branch has no upstream and CI has zero executions.
+- [ ] **R-021**: The Codex hook configuration is confirmed against a real Codex
+      installation. It is currently a best reading of published documentation,
+      never executed, and `wb-init` says so in its own output.
+- [ ] **R-022**: The governance is validated on a project that is not this one,
+      by running `wb-init` against a real repository and reporting what the
+      auditor finds there.
+
 ## Amendments
 
 Append only. An amendment invalidates the baseline for every requirement it
@@ -123,3 +176,11 @@ touches; work in flight against those requirements must be re-baselined.
 | 2026-08-30 | R-012 | added | M2/R-006: name the safety-boundary guarantee | owner |
 | 2026-08-30 | R-013 | added | M2/R-006: name the installation guarantee | owner |
 | 2026-08-30 | R-014 | added | M2/R-006: name the evidence-reproducibility guarantee | owner |
+| 2026-08-30 | R-015 | added | M3: skills are never selected in 1010 transcripts; no gate tests selection | owner |
+| 2026-08-30 | R-016 | added | M3: no gate tests whether a skill changes behaviour | owner |
+| 2026-08-30 | R-017 | added | M3: descriptions route on a subjective size judgement | owner |
+| 2026-08-30 | R-018 | added | M3: unselected skills cost maintenance at zero value | owner |
+| 2026-08-30 | R-019 | added | M1 residual: merge gate never run; landing was never a requirement | owner |
+| 2026-08-30 | R-020 | added | M1 residual: CI has zero executions; reproducibility unproven off this machine | owner |
+| 2026-08-30 | R-021 | added | M1 residual: Codex hook schema never executed by Codex | owner |
+| 2026-08-30 | R-022 | added | M1 residual: governance never run against a real project | owner |
