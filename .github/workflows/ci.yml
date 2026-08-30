@@ -17,6 +17,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Gate evidence is computed from commit history. The default
+          # depth-1 checkout hides it, so G25 reports 1 requirement
+          # started instead of 8 and its recorded evidence stops
+          # reproducing -- the decay R-005 exists to prevent.
+          fetch-depth: 0
       - name: Validate shell syntax
         run: bash -n install.sh tests/*.sh skills/discipline/*/scripts/commit-msg skills/discipline/*/scripts/wb-remind skills/discipline/*/scripts/wb-init
       - name: Validate skill packages
