@@ -133,3 +133,15 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
   CHECK: test -f BACKLOG.md && grep -q 'work-ledger-protocol' BACKLOG.md && grep -q '## Declined' BACKLOG.md && grep -q 'not a queue of work' BACKLOG.md && echo BACKLOG_PASS
   EXPECT: BACKLOG_PASS
   EVIDENCE: BACKLOG_PASS
+
+- [x] G23: Every lifecycle lead binds delivery to the recorded requirement set.
+  Req: R-007
+  CHECK: for f in skills/general/*-lead-orchestrator/SKILL.md skills/salesforce/salesforce-omnistudio-*-lead-orchestrator/SKILL.md; do grep -q 'Bind delivery to requirements' "$f" && grep -q 'requirements-traceability-auditor' "$f" || exit 1; done; echo LEAD_BINDING_PASS
+  EXPECT: LEAD_BINDING_PASS
+  EVIDENCE: LEAD_BINDING_PASS
+
+- [x] G24: Restructuring preserved the installed layout and host discovery contract.
+  Req: R-008
+  CHECK: ./tests/test_installer.sh >/dev/null && t=$(mktemp -d) && ./install.sh --all --group all --scope project --project-dir "$t" >/dev/null && test "$(find "$t" -name SKILL.md | wc -l | tr -d ' ')" = "72" && rm -rf "$t" && echo INSTALL_CONTRACT_PASS
+  EXPECT: INSTALL_CONTRACT_PASS
+  EVIDENCE: INSTALL_CONTRACT_PASS
