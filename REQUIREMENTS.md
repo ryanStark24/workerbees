@@ -56,6 +56,32 @@ the following; each is parked in `BACKLOG.md` with rationale.
 - Blocking scope growth. Scope creep is reported, not prevented.
 - Replacing or migrating GSD `.planning/` content.
 
+## Milestone 2 — bring the existing skill families under governance
+
+**Defined:** 2026-08-30 · **Frozen at:** PENDING_M2_COMMIT
+**Core Value:** The 23 pre-existing skills are as measurable as the new one, and
+any work they orchestrate is requirement-bound by default.
+
+- [ ] **R-006**: Every pre-existing skill family is covered by a recorded
+      requirement, and every gate names the requirement it proves, so the
+      auditor reports no orphan gates for delivered work.
+- [ ] **R-007**: Every lifecycle lead binds delivery to requirements by
+      composing with the traceability auditor at its planning step, so
+      orchestrated work is requirement-bound without anyone remembering to ask.
+- [ ] **R-008**: Restructuring changes nothing about the installed layout or
+      host discovery contract, proven by the existing installer tests across all
+      four targets and every group.
+
+### M2 non-goals
+
+- **Consolidating the Salesforce variants.** Measured and rejected: 734 lines
+  across 11 variants share only 10 distinct lines, all section headings. The
+  premise of "~1,100 lines of near-duplication" was wrong. See Declined in
+  `BACKLOG.md`.
+- **Regrouping the taxonomy.** Parked: high churn across `install.sh`, tests,
+  gates, and every path, with no evidence of need. Reconsider only after a
+  concrete selection problem is observed.
+
 ## Amendments
 
 Append only. An amendment invalidates the baseline for every requirement it
@@ -63,4 +89,6 @@ touches; work in flight against those requirements must be re-baselined.
 
 | Date | Requirement | Change | Reason | Approved by |
 |---|---|---|---|---|
-| | | | | |
+| 2026-08-30 | R-006 | added | M2: auditor reported ORPHAN_GATE=12; pre-existing skills have no recorded requirements | owner |
+| 2026-08-30 | R-007 | added | M2: make orchestrated work requirement-bound by default | owner |
+| 2026-08-30 | R-008 | added | M2: protect the install contract while restructuring | owner |
