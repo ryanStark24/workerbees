@@ -154,6 +154,6 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
 
 - [x] G26: Committed host configurations reference the reminder portably, not by machine path.
   Req: R-004
-  CHECK: ! grep -rhE '"command"[[:space:]]*:[[:space:]]*"/' .claude .cursor .agents .codex && echo PORTABLE_HOOKS_PASS
+  CHECK: for f in .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/hooks.json; do test -f "$f" || { echo "missing $f"; exit 1; }; done; ! grep -nE '"command"[[:space:]]*:[[:space:]]*"(/|[^"]*//)' .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/hooks.json && echo PORTABLE_HOOKS_PASS
   EXPECT: PORTABLE_HOOKS_PASS
   EVIDENCE: PORTABLE_HOOKS_PASS

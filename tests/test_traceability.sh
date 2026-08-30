@@ -263,6 +263,28 @@ for cfg in .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/ho
         && fail "$cfg leaks the absolute project location"
 done
 
+# package IS the project root. A glob of "$project"/* also matches when the two
+# are equal, so a naive prefix strip becomes a no-op and emits "./" glued to a
+# full absolute path -- a command that resolves nowhere and reads as relative.
+selfproj="$TEST_ROOT/selfproj"
+cp -R "$PKG" "$selfproj"
+git init -q "$selfproj"
+git -C "$selfproj" config user.email t@example.com
+git -C "$selfproj" config user.name Tester
+"$selfproj/scripts/wb-init" "$selfproj" >/dev/null 2>&1 \
+    || fail "wb-init failed when the package is the project root"
+selfcmd=$(python3 -c "
+import json,sys
+print(json.load(open(sys.argv[1]))['hooks']['SessionStart'][0]['hooks'][0]['command'])" \
+    "$selfproj/.claude/settings.json")
+[ "$selfcmd" = "./scripts/wb-remind" ] \
+    || fail "package-as-project wired '$selfcmd', expected ./scripts/wb-remind"
+case "$selfcmd" in
+    *//*) fail "package-as-project produced a doubled slash: $selfcmd" ;;
+esac
+( cd "$selfproj" && bash -c "$selfcmd" >/dev/null 2>&1 ) \
+    || fail "the wired command does not execute from the project root"
+
 # out-of-project package: absolute is still correct, since nothing else resolves.
 grep -qE '"command": *"/' "$wired/.claude/settings.json" \
     || fail "wb-init should keep an absolute path when the package is outside the project"

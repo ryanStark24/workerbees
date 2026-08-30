@@ -80,9 +80,18 @@ done
 # command that cannot exist, and the repository publishes its author's directory
 # layout. Outside the project, absolute is the only thing that resolves.
 remind="$PKG/scripts/wb-remind"
-case "$PKG/" in
-    "$project"/*) remind="./${PKG#"$project"/}/scripts/wb-remind" ;;
-esac
+if [ "$PKG" = "$project" ]; then
+    remind="./scripts/wb-remind"
+else
+    # Use the strip itself as the test: it only changes the string when PKG is
+    # genuinely below project. A glob like "$project"/* also matches when the
+    # two are equal (* matches empty), which would leave the strip a no-op and
+    # emit "./" prepended to a full absolute path.
+    rel=${PKG#"$project"/}
+    if [ "$rel" != "$PKG" ]; then
+        remind="./$rel/scripts/wb-remind"
+    fi
+fi
 IFS=',' read -r -a host_list <<< "$hosts"
 for host in "${host_list[@]}"; do
     case "$host" in
