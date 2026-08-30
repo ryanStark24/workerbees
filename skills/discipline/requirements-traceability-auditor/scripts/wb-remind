@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# WorkerBees scope reminder. Prints the current delivery position and the scope
+# rule. Intended for a SessionStart hook so the position is stated before work
+# begins rather than recalled afterwards.
+#
+# Usage: wb-remind [repo-path]
+# Always exits 0; it informs, it never blocks.
+set -uo pipefail
+
+repo=${1:-$(pwd)}
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+trace="$here/wb_trace.py"
+
+find_one() {
+    local name=$1 sub
+    for sub in "" ".planning" "docs"; do
+        [ -f "$repo/$sub/$name" ] && { printf '%s' "$repo/${sub:+$sub/}$name"; return 0; }
+    done
+    return 1
+}
+
+req=$(find_one REQUIREMENTS.md) || {
+    cat <<'MSG'
+WorkerBees scope governance: no REQUIREMENTS.md found.
+
+Before implementation begins, freeze a deliberately small requirement set
+(five, not twenty-five) so delivery can be measured rather than asserted.
+New ideas belong in BACKLOG.md, not in the active milestone.
+MSG
+    exit 0
+}
+
+backlog=$(find_one BACKLOG.md) || backlog=""
+# Count only populated rows under "## Parked": skip headers, separators, blanks.
+parked=0
+if [ -n "$backlog" ]; then
+    parked=$(awk '
+        /^##[[:space:]]*Parked/   { inp = 1; next }
+        /^##/                     { inp = 0 }
+        !inp                      { next }
+        !/^[[:space:]]*\|/         { next }
+        /^[[:space:]]*\|[[:space:]]*-+/ { next }          # separator row
+        /^[[:space:]]*\|[[:space:]]*Date[[:space:]]*\|/ { next }   # header row
+        { gsub(/[|[:space:]]/, "", $0); if (length($0)) n++ }
+        END { print n + 0 }
+    ' "$backlog" 2>/dev/null)
+fi
+
+summary=""
+[ -f "$trace" ] && summary=$(python3 "$trace" "$repo" 2>/dev/null | grep -E '^  (summary|SCOPE|WIP_)' || true)
+
+printf 'WorkerBees scope governance — %s\n' "$(basename "$repo")"
+printf '  requirements: %s\n' "${req#$repo/}"
+if [ -n "$summary" ]; then printf '%s\n' "$summary"; else printf '  (status unavailable)\n'; fi
+printf '  backlog: %s parked idea(s)%s\n' "${parked:-0}" "${backlog:+ in ${backlog#$repo/}}"
+cat <<'MSG'
+
+  RULE: a new idea goes to BACKLOG.md. Admitting it to the active milestone
+  requires closing a requirement or recording a dated amendment. Finishing
+  beats starting; append to the backlog, not to the build.
+MSG
+exit 0
