@@ -148,14 +148,11 @@ That is delivery evidence, **not** landing or field validation. These items were
 never written as requirements, which is itself the finding.
 
 - [ ] **R-019**: The M1 change is landed through this project's merge gate — pull
-      request, internal code review, and independent technical *and* functional
-      review — with every gate reported as run rather than assumed.
+      request and internal code review — with every gate reported as run rather
+      than assumed.
 - [ ] **R-020**: The gate suite is proven to reproduce on a machine that has
       never seen this project, by CI executing on both platforms. Never yet run:
       the branch has no upstream and CI has zero executions.
-- [ ] **R-021**: The Codex hook configuration is confirmed against a real Codex
-      installation. It is currently a best reading of published documentation,
-      never executed, and `wb-init` says so in its own output.
 - [ ] **R-022**: The governance is validated on a project that is not this one,
       by running `wb-init` against a real repository and reporting what the
       auditor finds there.
@@ -184,3 +181,5 @@ touches; work in flight against those requirements must be re-baselined.
 | 2026-08-30 | R-020 | added | M1 residual: CI has zero executions; reproducibility unproven off this machine | owner |
 | 2026-08-30 | R-021 | added | M1 residual: Codex hook schema never executed by Codex | owner |
 | 2026-08-30 | R-022 | added | M1 residual: governance never run against a real project | owner |
+| 2026-08-30 | R-019 | amended | Codex review excluded by owner; the independent technical and functional review halves are dropped from the merge gate | owner |
+| 2026-08-30 | R-021 | withdrawn | Codex review excluded by owner, so hook verification has no owner. `wb-init` already prints "verify against your Codex version", so R-004's wiring claim stays honest without this requirement. Recorded in BACKLOG.md Declined | owner |

@@ -46,6 +46,7 @@ bottom.
 | 2026-08-30 | Four separate per-host enforcement adapters for commit rules | Superseded: one `commit-msg` git hook covers every host and hand-typed commits alike |
 | 2026-08-30 | Rebuilding worktree/fleet management | Commodity — `git worktree`, `worktrunk`, Conductor, Vibe Kanban already do it |
 | 2026-08-30 | Rebuilding spec-driven planning from scratch | Spec Kit and OpenSpec already define the conventions; adopt rather than reinvent |
+| 2026-08-30 | R-021 — confirm the Codex hook configuration against a real Codex installation | Would replace a documentation-derived hook schema with an executed one | Codex review is excluded by owner instruction, so no one owns the verification. `wb-init` already prints "verify against your Codex version", so the caveat is surfaced at the point of use rather than hidden |
 
 ---
 
