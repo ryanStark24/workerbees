@@ -74,7 +74,15 @@ for doc in AGENTS.md CLAUDE.md; do
 done
 
 # 4. SessionStart reminder per host.
+# When the package lives inside the project being wired, record the command
+# relative to the project root. Host config files are routinely committed, and
+# an absolute path is correct on exactly one machine -- every other clone gets a
+# command that cannot exist, and the repository publishes its author's directory
+# layout. Outside the project, absolute is the only thing that resolves.
 remind="$PKG/scripts/wb-remind"
+case "$PKG/" in
+    "$project"/*) remind="./${PKG#"$project"/}/scripts/wb-remind" ;;
+esac
 IFS=',' read -r -a host_list <<< "$hosts"
 for host in "${host_list[@]}"; do
     case "$host" in

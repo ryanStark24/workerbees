@@ -151,3 +151,9 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
   CHECK: ./tests/test_gate_coverage.sh
   EXPECT: PASS: every gate names a requirement, and every started requirement has a gate
   EVIDENCE: PASS: every gate names a requirement, and every started requirement has a gate
+
+- [x] G26: Committed host configurations reference the reminder portably, not by machine path.
+  Req: R-004
+  CHECK: ! grep -rhE '"command"[[:space:]]*:[[:space:]]*"/' .claude .cursor .agents .codex && echo PORTABLE_HOOKS_PASS
+  EXPECT: PORTABLE_HOOKS_PASS
+  EVIDENCE: PORTABLE_HOOKS_PASS

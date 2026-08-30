@@ -242,6 +242,31 @@ print(len(d))" "$@"; }
 [ "$(grep -c 'Scope governance (non-negotiable)' "$wired/AGENTS.md")" = "1" ] \
     || fail "wb-init duplicated the AGENTS.md governance block"
 
+# in-project package: the wired command must not pin an absolute machine path.
+# A repository that vendors the skill and commits its host configs would
+# otherwise publish paths that exist on exactly one machine.
+inproj="$TEST_ROOT/inproj"
+git init -q "$inproj"
+git -C "$inproj" config user.email t@example.com
+git -C "$inproj" config user.name Tester
+mkdir -p "$inproj/skills/discipline"
+cp -R "$PKG" "$inproj/skills/discipline/requirements-traceability-auditor"
+"$inproj/skills/discipline/requirements-traceability-auditor/scripts/wb-init" "$inproj" >/dev/null 2>&1 \
+    || fail "wb-init failed when the package lives inside the project"
+
+for cfg in .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/hooks.json; do
+    grep -q 'wb-remind' "$inproj/$cfg" || fail "$cfg lost the reminder for an in-project package"
+    if grep -qE '"command": *"/' "$inproj/$cfg"; then
+        fail "$cfg pins an absolute path for a package that lives inside the project"
+    fi
+    grep -q "$TEST_ROOT" "$inproj/$cfg" \
+        && fail "$cfg leaks the absolute project location"
+done
+
+# out-of-project package: absolute is still correct, since nothing else resolves.
+grep -qE '"command": *"/' "$wired/.claude/settings.json" \
+    || fail "wb-init should keep an absolute path when the package is outside the project"
+
 # worktrees: .git is a file and hooks live in the shared common directory
 wt_main="$TEST_ROOT/wt-main"
 git init -q "$wt_main"

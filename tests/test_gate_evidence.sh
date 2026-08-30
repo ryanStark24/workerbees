@@ -38,5 +38,9 @@ for gate_id in $(sed -n 's/^- \[[ x]\] \(G[0-9][0-9]*\):.*/\1/p' "$GATES_FILE");
     fi
 done
 
-[ "$gate_count" -eq 25 ] || fail "expected 25 gates, found $gate_count"
-printf 'PASS: 25 gate commands and recorded evidence agree\n'
+# An exact count, deliberately: it catches a gate being deleted or the parser
+# silently matching nothing. Unlike a count derived from commit history, this
+# one only moves when somebody edits GATES.md in the same change, so it fails
+# loudly and immediately rather than decaying underneath unrelated work.
+[ "$gate_count" -eq 26 ] || fail "expected 26 gates, found $gate_count"
+printf 'PASS: 26 gate commands and recorded evidence agree\n'
