@@ -64,7 +64,12 @@ if uncovered:
     sys.exit(f'FAIL: {len(uncovered)} requirement(s) have commits but no gate')
 
 planned_ungated = sorted(known - started - covered)
-note = f'; {len(planned_ungated)} planned and not yet gated' if planned_ungated else ''
-print(f'PASS: {len(gates)} gates cover {len(covered)} requirement(s), '
-      f'{len(started)} of them started{note}')
+
+# Counts are diagnostics and move with ordinary work, so they go on their own
+# line. The verdict line states the rule that was checked and nothing derived
+# from commit history, so a gate can record it as EXPECT without the evidence
+# decaying the next time somebody advances a requirement.
+print(f'  coverage: {len(gates)} gates, {len(covered)} requirement(s) covered, '
+      f'{len(started)} started, {len(planned_ungated)} planned and not yet gated')
+print('PASS: every gate names a requirement, and every started requirement has a gate')
 PY
