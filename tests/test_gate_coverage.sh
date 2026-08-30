@@ -6,9 +6,7 @@ set -euo pipefail
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 python3 - "$REPO_DIR/GATES.md" "$REPO_DIR/REQUIREMENTS.md" "$REPO_DIR" <<'PY'
-import re, sys
-
-import subprocess
+import os, re, sys
 
 gates_path, reqs_path, repo = sys.argv[1], sys.argv[2], sys.argv[3]
 
@@ -46,9 +44,17 @@ if unknown:
 
 # A requirement needs a gate once work on it has begun. Planned work does not:
 # requiring a gate before the first commit would only invite placeholder gates.
-log = subprocess.run(["git", "-C", repo, "log", "--format=%s%n%b"],
-                     capture_output=True, text=True).stdout
-started = {r for r in known if re.search(rf'\b{re.escape(r)}\b', log)}
+#
+# "Started" is decided by the auditor's own parser, not a second implementation
+# here. Grepping the raw log for an id counts any commit that merely *mentions*
+# a requirement -- including the `Req: none (reason)` commits that only edit its
+# text -- which is the exact mis-attribution wb_trace.parse_commits exists to
+# avoid. One rule, one implementation.
+sys.path.insert(0, os.path.join(
+    repo, "skills/discipline/requirements-traceability-auditor/scripts"))
+import wb_trace
+
+started = {r for c in wb_trace.parse_commits(repo, "", 0) for r in c["refs"]} & known
 
 covered = {r for g in gates for r in g['reqs']}
 uncovered = sorted(started - covered)
