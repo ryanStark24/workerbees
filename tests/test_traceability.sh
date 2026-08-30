@@ -123,6 +123,33 @@ grep -Eq '^  R-001  DONE +1 ' <<<"$out" \
 grep -q 'UNTRACKED' <<<"$out" \
     || fail "exempt commits must still be reported as drift"
 
+# merge commits carry no requirement trailer -- the commit-msg hook exempts them
+# by design -- so the auditor must not fall back to scanning their message. A
+# merge summary naturally names the requirements the branch touched, and reading
+# those as delivery marks work started that has no commit behind it.
+merges="$TEST_ROOT/merges"
+git init -q "$merges"
+git -C "$merges" config user.email t@example.com
+git -C "$merges" config user.name Tester
+printf '# Requirements\n- [ ] **R-001**: delivered\n- [ ] **R-002**: never worked on\n' \
+    > "$merges/REQUIREMENTS.md"
+printf -- '- [x] G1: R-001 holds.\n  EVIDENCE: OK\n' > "$merges/GATES.md"
+git -C "$merges" add . && git -C "$merges" commit -q -m "docs: baseline" -m "Req: none (fixture)"
+git -C "$merges" checkout -q -b side
+echo 1 > "$merges/f"; git -C "$merges" add f
+git -C "$merges" commit -q -m "feat: deliver" -m "Req: R-001"
+git -C "$merges" checkout -q -
+git -C "$merges" merge -q --no-ff side \
+    -m "Merge branch 'side'" -m "Delivers R-001 and mentions R-002 in passing."
+
+out=$(python3 "$TRACE" "$merges" 2>&1) || true
+grep -Eq '^  R-002  NOT_STARTED' <<<"$out" \
+    || fail "a merge commit naming R-002 in its summary was read as starting it"
+grep -Eq '^  R-001  DONE +1 ' <<<"$out" \
+    || fail "the merge commit inflated R-001's commit count"
+grep -q "Merge branch" <<<"$out" \
+    && fail "merge commits should not be reported as untracked drift"
+
 # ---------- scope governance ----------
 scope="$TEST_ROOT/scope"
 git init -q "$scope"
