@@ -324,6 +324,35 @@ esac
 grep -qE '"command": *"/' "$wired/.claude/settings.json" \
     || fail "wb-init should keep an absolute path when the package is outside the project"
 
+# a deliberately customised invocation is the user's, not ours. wb-init may
+# skip it, but must never delete it: the command mentions wb-remind, it is not
+# a bare call to it.
+custom="$TEST_ROOT/custom"
+git init -q "$custom"
+mkdir -p "$custom/.claude"
+cat > "$custom/.claude/settings.json" <<'J'
+{ "hooks": { "SessionStart": [
+  { "hooks": [ { "type": "command", "command": "bash -c 'my-logger start && ./skills/discipline/requirements-traceability-auditor/scripts/wb-remind'" } ] }
+] } }
+J
+"$INIT" "$custom" >/dev/null 2>&1 || fail "wb-init failed on a customised hook"
+grep -q 'my-logger' "$custom/.claude/settings.json" \
+    || fail "wb-init deleted a user's customised wb-remind invocation"
+
+# a malformed value where a list belongs must not abort the run and strand the
+# remaining hosts unwired.
+odd="$TEST_ROOT/oddshape"
+git init -q "$odd"
+mkdir -p "$odd/.claude"
+printf '{ "hooks": { "SessionStart": {} } }\n' > "$odd/.claude/settings.json"
+"$INIT" "$odd" >/dev/null 2>&1 || fail "wb-init aborted on a non-list SessionStart"
+for cfg in .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/hooks.json; do
+    [ -f "$odd/$cfg" ] || fail "wb-init left $cfg unwired after a malformed config"
+    python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$odd/$cfg" \
+        || fail "$cfg is not valid JSON after recovering from a malformed config"
+    grep -q 'wb-remind' "$odd/$cfg" || fail "$cfg has no reminder after recovery"
+done
+
 # worktrees: .git is a file and hooks live in the shared common directory
 wt_main="$TEST_ROOT/wt-main"
 git init -q "$wt_main"

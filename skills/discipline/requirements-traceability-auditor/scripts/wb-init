@@ -109,17 +109,33 @@ if os.path.isfile(path):
 if not isinstance(data, dict):
     data = {}
 
-# An entry is ours if it references the wb-remind script by name. Matching
-# the exact current path would strand entries written by an earlier install
-# under a different path, so a re-run would add a duplicate instead of
-# updating. Foreign entries are never touched.
+# Ours means a bare invocation of the script, under whatever path an earlier
+# install used -- matching the exact current path would strand those and a
+# re-run would duplicate rather than update. A command that merely *mentions*
+# wb-remind (a wrapper, a logger, a conditional) is a deliberate customisation
+# belonging to somebody else, and these entries get replaced, so a loose match
+# would delete their work.
+def _commands(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "command" and isinstance(value, str):
+                yield value
+            else:
+                yield from _commands(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _commands(value)
+
 def is_ours(entry):
-    return "wb-remind" in json.dumps(entry)
+    return any(c == "wb-remind" or c.endswith("/wb-remind")
+               for c in _commands(entry))
 
 hooks = data.setdefault("hooks", {})
 if not isinstance(hooks, dict):
     hooks = data["hooks"] = {}
 entries = hooks.setdefault("SessionStart", [])
+if not isinstance(entries, list):
+    entries = hooks["SessionStart"] = []
 entries[:] = [e for e in entries if not is_ours(e)]
 entries.append({"hooks": [{"type": "command", "command": remind}]})
 json.dump(data, open(path, "w"), indent=2)
@@ -141,17 +157,33 @@ if not isinstance(data, dict):
     data = {"version": 1, "hooks": {}}
 data.setdefault("version", 1)
 
-# An entry is ours if it references the wb-remind script by name. Matching
-# the exact current path would strand entries written by an earlier install
-# under a different path, so a re-run would add a duplicate instead of
-# updating. Foreign entries are never touched.
+# Ours means a bare invocation of the script, under whatever path an earlier
+# install used -- matching the exact current path would strand those and a
+# re-run would duplicate rather than update. A command that merely *mentions*
+# wb-remind (a wrapper, a logger, a conditional) is a deliberate customisation
+# belonging to somebody else, and these entries get replaced, so a loose match
+# would delete their work.
+def _commands(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "command" and isinstance(value, str):
+                yield value
+            else:
+                yield from _commands(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _commands(value)
+
 def is_ours(entry):
-    return "wb-remind" in json.dumps(entry)
+    return any(c == "wb-remind" or c.endswith("/wb-remind")
+               for c in _commands(entry))
 
 hooks = data.setdefault("hooks", {})
 if not isinstance(hooks, dict):
     hooks = data["hooks"] = {}
 entries = hooks.setdefault("sessionStart", [])
+if not isinstance(entries, list):
+    entries = hooks["sessionStart"] = []
 entries[:] = [e for e in entries if not is_ours(e)]
 entries.append({"command": remind})
 json.dump(data, open(path, "w"), indent=2)
@@ -172,12 +204,26 @@ if os.path.isfile(path):
 if not isinstance(data, dict):
     data = {}
 
-# An entry is ours if it references the wb-remind script by name. Matching
-# the exact current path would strand entries written by an earlier install
-# under a different path, so a re-run would add a duplicate instead of
-# updating. Foreign entries are never touched.
+# Ours means a bare invocation of the script, under whatever path an earlier
+# install used -- matching the exact current path would strand those and a
+# re-run would duplicate rather than update. A command that merely *mentions*
+# wb-remind (a wrapper, a logger, a conditional) is a deliberate customisation
+# belonging to somebody else, and these entries get replaced, so a loose match
+# would delete their work.
+def _commands(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "command" and isinstance(value, str):
+                yield value
+            else:
+                yield from _commands(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _commands(value)
+
 def is_ours(entry):
-    return "wb-remind" in json.dumps(entry)
+    return any(c == "wb-remind" or c.endswith("/wb-remind")
+               for c in _commands(entry))
 
 entries = data.setdefault("PreInvocation", [])
 if not isinstance(entries, list):
@@ -206,12 +252,26 @@ if os.path.isfile(path):
 if not isinstance(data, dict):
     data = {}
 
-# An entry is ours if it references the wb-remind script by name. Matching
-# the exact current path would strand entries written by an earlier install
-# under a different path, so a re-run would add a duplicate instead of
-# updating. Foreign entries are never touched.
+# Ours means a bare invocation of the script, under whatever path an earlier
+# install used -- matching the exact current path would strand those and a
+# re-run would duplicate rather than update. A command that merely *mentions*
+# wb-remind (a wrapper, a logger, a conditional) is a deliberate customisation
+# belonging to somebody else, and these entries get replaced, so a loose match
+# would delete their work.
+def _commands(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "command" and isinstance(value, str):
+                yield value
+            else:
+                yield from _commands(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _commands(value)
+
 def is_ours(entry):
-    return "wb-remind" in json.dumps(entry)
+    return any(c == "wb-remind" or c.endswith("/wb-remind")
+               for c in _commands(entry))
 
 # An older wb-init wrote SessionStart at the top level. Reclaim only the
 # entries that are ours; anything else there is somebody else's and stays
@@ -229,6 +289,8 @@ hooks = data.setdefault("hooks", {})
 if not isinstance(hooks, dict):
     hooks = data["hooks"] = {}
 entries = hooks.setdefault("SessionStart", [])
+if not isinstance(entries, list):
+    entries = hooks["SessionStart"] = []
 entries[:] = [e for e in entries if not is_ours(e)]
 entries.append({"hooks": [{"command": remind}]})
 json.dump(data, open(path, "w"), indent=2)
