@@ -38,5 +38,5 @@ for gate_id in $(sed -n 's/^- \[[ x]\] \(G[0-9][0-9]*\):.*/\1/p' "$GATES_FILE");
     fi
 done
 
-[ "$gate_count" -eq 24 ] || fail "expected 24 gates, found $gate_count"
-printf 'PASS: 24 gate commands and recorded evidence agree\n'
+[ "$gate_count" -eq 25 ] || fail "expected 25 gates, found $gate_count"
+printf 'PASS: 25 gate commands and recorded evidence agree\n'

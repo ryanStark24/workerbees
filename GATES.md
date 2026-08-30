@@ -145,3 +145,9 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
   CHECK: ./tests/test_installer.sh >/dev/null && t=$(mktemp -d) && ./install.sh --all --group all --scope project --project-dir "$t" >/dev/null && test "$(find "$t" -name SKILL.md | wc -l | tr -d ' ')" = "72" && rm -rf "$t" && echo INSTALL_CONTRACT_PASS
   EXPECT: INSTALL_CONTRACT_PASS
   EVIDENCE: INSTALL_CONTRACT_PASS
+
+- [x] G25: Every gate names the requirement it proves, and every requirement has a gate.
+  Req: R-006
+  CHECK: ./tests/test_gate_coverage.sh
+  EXPECT: PASS: 25 gates and 14 requirements are mutually covered
+  EVIDENCE: PASS: 25 gates and 14 requirements are mutually covered
