@@ -35,6 +35,8 @@ REQ_LINE = re.compile(r"^\s*[-*]\s*\[( |x|X)\]\s*\**([A-Za-z]+\d*[a-z]?-\d+)\**\
 GATE_LINE = re.compile(r"^\s*[-*]\s*\[( |x|X)\]\s*(G\d+)\s*[:\.]?\s*(.*)$")
 EVIDENCE = re.compile(r"^\s*EVIDENCE:\s*(.*)$")
 TRAILER = re.compile(r"^\s*(?:Req|Requirement|Refs|Closes)\s*:\s*(.+)$", re.I)
+# `Req: none (reason)` -- the commit-msg hook's documented exemption.
+EXEMPT = re.compile(r"^\s*(?:Req|Requirement|Refs|Closes)\s*:\s*none\b", re.I)
 FROZEN = re.compile(r"^\s*\**Frozen at:?\**\s*:?\s*`?([0-9a-f]{7,40})`?", re.I | re.M)
 
 SEP = "\x1e"
@@ -172,12 +174,20 @@ def parse_commits(repo: str, rev_range: str, limit: int) -> list[dict]:
         sha, subject = parts[0], parts[1]
         body = parts[2] if len(parts) > 2 else ""
         refs: set[str] = set()
+        exempt = False
         for line in body.splitlines():
+            if EXEMPT.match(line):
+                exempt = True
+                continue
             trailer = TRAILER.match(line)
             if trailer:
                 refs.update(ID.findall(trailer.group(1)))
-        # fall back to any id mentioned anywhere in the message
-        if not refs:
+        # Fall back to any id mentioned anywhere in the message -- but not when
+        # the commit claims the hook's `Req: none (reason)` exemption. A commit
+        # that only edits a requirement's text names ids in prose, and counting
+        # those would report the requirement as started by its own rewording.
+        # Exempt commits still carry no refs, so they remain UNTRACKED drift.
+        if not refs and not exempt:
             refs.update(ID.findall(subject))
             refs.update(ID.findall(body))
         commits.append({"sha": sha[:9], "subject": subject[:70], "refs": refs})

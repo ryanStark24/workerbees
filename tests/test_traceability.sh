@@ -95,6 +95,34 @@ git -C "$clean" add . && git -C "$clean" commit -q -m "feat: deliver" -m "Req: R
 python3 "$TRACE" "$clean" --strict >/dev/null 2>&1 \
     || fail "--strict returned non-zero on a clean repository"
 
+# ---------- exemption trailer suppresses the prose fallback ----------
+# `Req: none (reason)` is the hook's documented escape hatch. The auditor must
+# honour it: a commit that only edits a requirement's text names ids in prose,
+# and must not thereby be counted as delivering them.
+exempt="$TEST_ROOT/exempt"
+git init -q "$exempt"
+git -C "$exempt" config user.email t@example.com
+git -C "$exempt" config user.name Tester
+
+printf '# Requirements\n- [ ] **R-001**: delivered\n- [ ] **R-002**: only ever named in prose\n' \
+    > "$exempt/REQUIREMENTS.md"
+printf -- '- [x] G1: R-001 holds.\n  EVIDENCE: OK\n' > "$exempt/GATES.md"
+git -C "$exempt" add . && git -C "$exempt" commit -q -m "docs: baseline" -m "Req: none (fixture setup)"
+echo 1 > "$exempt/x"; git -C "$exempt" add x
+git -C "$exempt" commit -q -m "feat: deliver" -m "Req: R-001"
+echo 2 > "$exempt/y"; git -C "$exempt" add y
+git -C "$exempt" commit -q -m "docs: reword R-002 and cross-check R-001" \
+    -m "Body also names R-001 and R-002." -m "Req: none (requirement amendment)"
+
+out=$(python3 "$TRACE" "$exempt" 2>&1) || true
+
+grep -Eq '^  R-002  NOT_STARTED' <<<"$out" \
+    || fail "an exempt commit naming R-002 in prose was counted as starting it"
+grep -Eq '^  R-001  DONE +1 ' <<<"$out" \
+    || fail "an exempt commit naming R-001 in prose inflated its commit count"
+grep -q 'UNTRACKED' <<<"$out" \
+    || fail "exempt commits must still be reported as drift"
+
 # ---------- scope governance ----------
 scope="$TEST_ROOT/scope"
 git init -q "$scope"
