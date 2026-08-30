@@ -58,7 +58,7 @@ the following; each is parked in `BACKLOG.md` with rationale.
 
 ## Milestone 2 — bring the existing skill families under governance
 
-**Defined:** 2026-08-30 · **Frozen at:** PENDING_M2_COMMIT
+**Defined:** 2026-08-30 · **Frozen at:** d9dec6d6134bb501f117a01651ebe6c9000cc487
 **Core Value:** The 23 pre-existing skills are as measurable as the new one, and
 any work they orchestrate is requirement-bound by default.
 
