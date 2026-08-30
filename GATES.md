@@ -112,7 +112,7 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
 
 - [x] G19: The installer accepts the discipline group at both scopes.
   Req: R-004
-  CHECK: ./install.sh --target claude --group discipline --scope global --dry-run >/dev/null && echo DISCIPLINE_GROUP_PASS
+  CHECK: d=$(mktemp -d) && CLAUDE_GLOBAL_SKILLS_DIR="$d/skills" ./install.sh --target claude --group discipline --scope global --dry-run >/dev/null && rm -rf "$d" && echo DISCIPLINE_GROUP_PASS
   EXPECT: DISCIPLINE_GROUP_PASS
   EVIDENCE: DISCIPLINE_GROUP_PASS
 
