@@ -191,10 +191,13 @@ printf '# Project\n\nExisting instructions.\n' > "$wired/AGENTS.md"
 printf '#!/bin/sh\necho legacy\n' > "$wired/.git/hooks/commit-msg"
 chmod +x "$wired/.git/hooks/commit-msg"
 mkdir -p "$wired/.codex"
+# Shape taken from a real Codex project: every hook nests under "hooks".
 cat > "$wired/.codex/hooks.json" <<'J'
 {
-  "SessionStart": [ { "hooks": [ { "command": "/usr/local/bin/legacy-session" } ] } ],
-  "PreToolUse":   [ { "hooks": [ { "command": "/usr/local/bin/legacy-guard" } ] } ]
+  "hooks": {
+    "PostToolUse": [ { "hooks": [ { "command": "/usr/local/bin/legacy-guard" } ] } ],
+    "Stop":        [ { "hooks": [ { "command": "/usr/local/bin/legacy-session" } ] } ]
+  }
 }
 J
 
@@ -218,9 +221,17 @@ done
 python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get('model')=='opus' else 1)" \
     "$wired/.claude/settings.json" || fail "wb-init clobbered existing Claude settings"
 grep -q 'legacy-session' "$wired/.codex/hooks.json" \
-    || fail "wb-init clobbered an existing Codex SessionStart hook"
+    || fail "wb-init clobbered an existing Codex Stop hook"
 grep -q 'legacy-guard' "$wired/.codex/hooks.json" \
-    || fail "wb-init dropped an unrelated Codex hook block (PreToolUse)"
+    || fail "wb-init dropped an unrelated Codex hook block (PostToolUse)"
+python3 -c "
+import json,sys
+d = json.load(open(sys.argv[1]))
+hooks = d.get('hooks', {})
+assert 'SessionStart' in hooks, 'SessionStart not nested under hooks'
+assert 'SessionStart' not in d, 'SessionStart stranded at the top level'
+assert 'PostToolUse' in hooks and 'Stop' in hooks, 'existing blocks lost'
+" "$wired/.codex/hooks.json" || fail "wb-init wired Codex at the wrong nesting level"
 
 # idempotency: three runs must not duplicate anything
 "$INIT" "$wired" >/dev/null 2>&1
@@ -237,8 +248,32 @@ print(len(d))" "$@"; }
     || fail "wb-init duplicated the Cursor hook"
 [ "$(count_json "$wired/.agents/hooks.json" PreInvocation)" = "1" ] \
     || fail "wb-init duplicated the Antigravity hook"
-[ "$(count_json "$wired/.codex/hooks.json" SessionStart)" = "2" ] \
-    || fail "wb-init duplicated the Codex hook or lost the pre-existing one"
+[ "$(count_json "$wired/.codex/hooks.json" hooks SessionStart)" = "1" ] \
+    || fail "wb-init duplicated the Codex hook across runs"
+
+# a project wired by an older wb-init carries SessionStart at the top level;
+# re-running must move our entry under "hooks" and not leave a stale copy.
+legacy="$TEST_ROOT/legacy-codex"
+git init -q "$legacy"
+mkdir -p "$legacy/.codex"
+cat > "$legacy/.codex/hooks.json" <<'J'
+{
+  "SessionStart": [
+    { "hooks": [ { "command": "/old/path/to/wb-remind" } ] },
+    { "hooks": [ { "command": "/usr/local/bin/somebody-elses-top-level-hook" } ] }
+  ]
+}
+J
+"$INIT" "$legacy" >/dev/null 2>&1 || fail "wb-init failed on a legacy-shaped Codex config"
+python3 -c "
+import json,sys
+d = json.load(open(sys.argv[1]))
+top = json.dumps(d.get('SessionStart', []))
+nested = json.dumps(d.get('hooks', {}).get('SessionStart', []))
+assert 'wb-remind' not in top, 'stale wb-remind left at the top level'
+assert 'wb-remind' in nested, 'wb-remind not migrated under hooks'
+assert 'somebody-elses-top-level-hook' in top, 'a foreign top-level hook was removed'
+" "$legacy/.codex/hooks.json" || fail "wb-init mishandled a legacy-shaped Codex config"
 [ "$(grep -c 'Scope governance (non-negotiable)' "$wired/AGENTS.md")" = "1" ] \
     || fail "wb-init duplicated the AGENTS.md governance block"
 

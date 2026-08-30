@@ -106,10 +106,22 @@ if os.path.isfile(path):
         data = json.load(open(path))
     except (ValueError, OSError):
         data = {}
+if not isinstance(data, dict):
+    data = {}
+
+# An entry is ours if it references the wb-remind script by name. Matching
+# the exact current path would strand entries written by an earlier install
+# under a different path, so a re-run would add a duplicate instead of
+# updating. Foreign entries are never touched.
+def is_ours(entry):
+    return "wb-remind" in json.dumps(entry)
+
 hooks = data.setdefault("hooks", {})
+if not isinstance(hooks, dict):
+    hooks = data["hooks"] = {}
 entries = hooks.setdefault("SessionStart", [])
-if not any(remind in json.dumps(e) for e in entries):
-    entries.append({"hooks": [{"type": "command", "command": remind}]})
+entries[:] = [e for e in entries if not is_ours(e)]
+entries.append({"hooks": [{"type": "command", "command": remind}]})
 json.dump(data, open(path, "w"), indent=2)
 PY
             say "wired Claude Code SessionStart (.claude/settings.json)"
@@ -125,10 +137,23 @@ if os.path.isfile(path):
         data = json.load(open(path))
     except (ValueError, OSError):
         pass
+if not isinstance(data, dict):
+    data = {"version": 1, "hooks": {}}
 data.setdefault("version", 1)
-entries = data.setdefault("hooks", {}).setdefault("sessionStart", [])
-if not any(remind in json.dumps(e) for e in entries):
-    entries.append({"command": remind})
+
+# An entry is ours if it references the wb-remind script by name. Matching
+# the exact current path would strand entries written by an earlier install
+# under a different path, so a re-run would add a duplicate instead of
+# updating. Foreign entries are never touched.
+def is_ours(entry):
+    return "wb-remind" in json.dumps(entry)
+
+hooks = data.setdefault("hooks", {})
+if not isinstance(hooks, dict):
+    hooks = data["hooks"] = {}
+entries = hooks.setdefault("sessionStart", [])
+entries[:] = [e for e in entries if not is_ours(e)]
+entries.append({"command": remind})
 json.dump(data, open(path, "w"), indent=2)
 PY
             say "wired Cursor sessionStart (.cursor/hooks.json)"
@@ -144,9 +169,21 @@ if os.path.isfile(path):
         data = json.load(open(path))
     except (ValueError, OSError):
         data = {}
+if not isinstance(data, dict):
+    data = {}
+
+# An entry is ours if it references the wb-remind script by name. Matching
+# the exact current path would strand entries written by an earlier install
+# under a different path, so a re-run would add a duplicate instead of
+# updating. Foreign entries are never touched.
+def is_ours(entry):
+    return "wb-remind" in json.dumps(entry)
+
 entries = data.setdefault("PreInvocation", [])
-if not any(remind in json.dumps(e) for e in entries):
-    entries.append({"type": "command", "command": remind})
+if not isinstance(entries, list):
+    entries = data["PreInvocation"] = []
+entries[:] = [e for e in entries if not is_ours(e)]
+entries.append({"type": "command", "command": remind})
 json.dump(data, open(path, "w"), indent=2)
 PY
             say "wired Antigravity PreInvocation (.agents/hooks.json)"
@@ -154,9 +191,9 @@ PY
         codex)
             mkdir -p "$project/.codex"
             # Merge, never truncate: an existing hooks.json may carry unrelated
-            # blocks (PreToolUse and friends) that are none of our business.
-            # The path also goes through json.dump rather than a heredoc, so an
-            # install path containing a quote or backslash stays valid JSON.
+            # blocks that are none of our business. Nesting under "hooks" matches
+            # the shape observed in a real Codex project, alongside PostToolUse
+            # and Stop -- the same shape Claude Code uses.
             python3 - "$project/.codex/hooks.json" "$remind" <<'PY'
 import json, os, sys
 path, remind = sys.argv[1], sys.argv[2]
@@ -168,9 +205,32 @@ if os.path.isfile(path):
         data = {}
 if not isinstance(data, dict):
     data = {}
-entries = data.setdefault("SessionStart", [])
-if not any(remind in json.dumps(e) for e in entries):
-    entries.append({"hooks": [{"command": remind}]})
+
+# An entry is ours if it references the wb-remind script by name. Matching
+# the exact current path would strand entries written by an earlier install
+# under a different path, so a re-run would add a duplicate instead of
+# updating. Foreign entries are never touched.
+def is_ours(entry):
+    return "wb-remind" in json.dumps(entry)
+
+# An older wb-init wrote SessionStart at the top level. Reclaim only the
+# entries that are ours; anything else there is somebody else's and stays
+# exactly where they put it.
+legacy = data.get("SessionStart")
+if isinstance(legacy, list):
+    foreign = [e for e in legacy if not is_ours(e)]
+    if len(foreign) != len(legacy):
+        if foreign:
+            data["SessionStart"] = foreign
+        else:
+            data.pop("SessionStart", None)
+
+hooks = data.setdefault("hooks", {})
+if not isinstance(hooks, dict):
+    hooks = data["hooks"] = {}
+entries = hooks.setdefault("SessionStart", [])
+entries[:] = [e for e in entries if not is_ours(e)]
+entries.append({"hooks": [{"command": remind}]})
 json.dump(data, open(path, "w"), indent=2)
 PY
             say "wired Codex SessionStart (.codex/hooks.json) -- verify against your Codex version"
