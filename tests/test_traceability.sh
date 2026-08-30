@@ -228,6 +228,13 @@ git -C "$TEST_ROOT/wt-child" add g.txt
 git -C "$TEST_ROOT/wt-child" commit -m "feat: untracked in worktree" >/dev/null 2>&1 \
     && fail "worktree accepted a commit with no requirement reference"
 
+# the auditor must also work inside a worktree (.git is a file there)
+printf '# Requirements\n- [ ] **R-001**: worktree support\n' > "$TEST_ROOT/wt-child/REQUIREMENTS.md"
+git -C "$TEST_ROOT/wt-child" add REQUIREMENTS.md
+git -C "$TEST_ROOT/wt-child" commit -q -m "docs: reqs" -m "Req: R-001"
+python3 "$TRACE" "$TEST_ROOT/wt-child" >/dev/null 2>&1 \
+    || fail "auditor failed inside a git worktree"
+
 # core.hooksPath must be honoured when set
 hp="$TEST_ROOT/custom-hooks"
 git -C "$wt_main" config core.hooksPath "$hp"

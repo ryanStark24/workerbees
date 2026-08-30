@@ -207,8 +207,16 @@ def main() -> int:
     args = ap.parse_args()
 
     repo = os.path.abspath(args.repo)
-    if not os.path.isdir(os.path.join(repo, ".git")):
-        print(f"error: not a git repository: {repo}", file=sys.stderr)
+    # .git is a file inside a worktree, so test the work tree rather than the path.
+    try:
+        inside = subprocess.run(
+            ["git", "-C", repo, "rev-parse", "--is-inside-work-tree"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        inside = ""
+    if inside != "true":
+        print(f"error: not a git work tree: {repo}", file=sys.stderr)
         return 2
 
     req_path = find_file(repo, args.requirements, ["REQUIREMENTS.md", "PLAN.md"])
