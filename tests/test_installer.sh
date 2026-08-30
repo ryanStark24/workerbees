@@ -44,7 +44,7 @@ while IFS= read -r entrypoint; do
     assert_tree_same "$package_dir" "$TEST_ROOT/project/.cursor/skills/$skill_name"
     installed_count=$((installed_count + 1))
 done < <(find "$REPO_DIR/skills" -mindepth 3 -maxdepth 3 -type f -name SKILL.md -print | LC_ALL=C sort)
-[ "$installed_count" -eq 23 ] || fail "expected 23 installed skill packages, found $installed_count"
+[ "$installed_count" -eq 24 ] || fail "expected 24 installed skill packages, found $installed_count"
 
 printf '\n# local change\n' >> "$TEST_ROOT/home/.agents/skills/swarm-lead-orchestrator/SKILL.md"
 if HOME="$TEST_ROOT/home" "$REPO_DIR/install.sh" --target codex >/dev/null 2>&1; then

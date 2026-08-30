@@ -74,6 +74,26 @@ Audit each experiment for a falsifiable hypothesis, fixed and changed variables,
 
 Report baseline, workload validity, localized bottleneck, experiments, before/after metrics, statistical caveats, capacity envelope, failure behavior, regression controls, and remaining production uncertainty.
 
+
+## Bind delivery to requirements
+
+Before decomposing work, load `requirements-traceability-auditor` when it is
+available. It owns the frozen requirement set, the commit-to-requirement
+binding, and the computed delivery status; this skill owns the domain work.
+
+Consequences that hold for every unit dispatched from here:
+
+- A unit exists to advance a recorded requirement. If it advances none, either
+  record the requirement first or park the idea — do not build it unnamed.
+- Every commit names its requirement. Completion is read from the auditor's
+  computed status, never asserted from a worker's report or your own judgement.
+- New scope discovered mid-flight goes to the backlog, or enters through a dated
+  amendment. It is never absorbed silently into the open milestone.
+
+If that skill is unavailable, keep the same discipline manually: state which
+recorded requirement each unit serves, and report anything unevidenced as
+`UNVERIFIED` rather than complete.
+
 ## Final self-check
 
 - Were before and after conditions comparable?

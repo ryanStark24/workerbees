@@ -4,7 +4,7 @@ WorkerBees is a portable collection of evidence-gated orchestration skills for c
 
 ## Included skills
 
-WorkerBees contains **23 skill packages** in the native directory format: 11 vendor-neutral lifecycle skills, 11 dedicated Salesforce OmniStudio/Vlocity counterparts, and one shared OmniStudio environment router.
+WorkerBees contains **24 skill packages** in the native directory format: 11 vendor-neutral lifecycle skills, 11 dedicated Salesforce OmniStudio/Vlocity counterparts, one shared OmniStudio environment router, and one delivery-discipline skill.
 
 ### General lifecycle skills
 
@@ -21,6 +21,56 @@ WorkerBees contains **23 skill packages** in the native directory format: 11 ven
 | `performance-capacity-lead-orchestrator` | Performance diagnosis and capacity validation |
 | `reliability-recovery-lead-orchestrator` | Failure handling, recovery, and resilience |
 | `privacy-compliance-lead-orchestrator` | Privacy data-flow and engineering-control assessment |
+
+### Delivery discipline skills
+
+| Skill | Specialty |
+|---|---|
+| `requirements-traceability-auditor` | Freeze a bounded requirement set, park new ideas instead of appending them mid-flight, bind commits to requirements, and compute delivery status from repository evidence rather than agent claims |
+
+Ships:
+
+- `scripts/wb_trace.py` — computes `NOT_STARTED`/`PARTIAL`/`UNVERIFIED`/`DONE`
+  per requirement, plus `UNTRACKED`, `UNKNOWN_REF`, `ORPHAN_GATE`,
+  `DECLARED_NOT_EVIDENCED`, `SCOPE_CREEP`, and `WIP_EXCEEDED`.
+- `scripts/commit-msg` — git hook requiring a `Req:` trailer on every commit, so
+  it constrains every agent and hand-typed commits alike.
+- `scripts/wb-remind` — SessionStart reminder stating the current delivery
+  position and the scope rule. Informs; never blocks.
+- `templates/REQUIREMENTS.md` and `templates/BACKLOG.md` — freeze the milestone,
+  park everything else.
+
+- `scripts/wb-init` — wires a project so **every** agent obeys the rules.
+- `templates/AGENTS.md.snippet` — the instructions themselves, read by Codex,
+  Cursor, and Antigravity via `AGENTS.md` and by Claude Code via `CLAUDE.md`.
+
+#### Wiring a project
+
+```bash
+skills/discipline/requirements-traceability-auditor/scripts/wb-init /path/to/project
+```
+
+Idempotent and non-destructive: existing files are never overwritten, an existing
+`commit-msg` hook is backed up, and JSON configs are merged rather than replaced.
+It installs:
+
+| Surface | What it does | Hosts |
+|---|---|---|
+| `.git/hooks/commit-msg` | **Blocks** commits with no `Req:` trailer | all, plus commits typed by hand |
+| `AGENTS.md` / `CLAUDE.md` | States the scope rules to the agent | Codex, Cursor, Antigravity / Claude Code |
+| `.claude/settings.json` | `SessionStart` reminder | Claude Code |
+| `.codex/hooks.json` | `SessionStart` reminder | Codex |
+| `.cursor/hooks.json` | `sessionStart` reminder | Cursor |
+| `.agents/hooks.json` | `PreInvocation` reminder | Antigravity |
+
+The git hook is the load-bearing one — it is host-independent and cannot be
+routed around by an agent claiming completion. The per-host hooks inform; they
+never block.
+
+```bash
+python3 skills/discipline/requirements-traceability-auditor/scripts/wb_trace.py <repo> --wip-limit 5 --strict
+skills/discipline/requirements-traceability-auditor/scripts/wb-remind <repo>
+```
 
 ### Salesforce OmniStudio lifecycle skills
 
@@ -53,6 +103,7 @@ The repository groups source packages by domain:
 ```text
 skills/
 ├── general/<skill-name>/SKILL.md
+├── discipline/<skill-name>/SKILL.md
 └── salesforce/<skill-name>/SKILL.md
 ```
 
@@ -130,7 +181,7 @@ See [COMPATIBILITY.md](COMPATIBILITY.md) for the distinction between filesystem 
 ```text
 --all
 --target cursor|antigravity|codex|claude
---group general|salesforce|all
+--group general|salesforce|discipline|all
 --scope project|global
 --project-dir PATH
 --force

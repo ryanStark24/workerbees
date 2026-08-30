@@ -106,6 +106,26 @@ omnistudio_investigation:
 
 Use `RESOLVED`, `INCONCLUSIVE`, or `BLOCKED`. `RESOLVED` requires a causal chain across the affected active asset and runtime. A designer screenshot, stale DataPack, source diff, or matching error text alone is insufficient.
 
+
+## Bind delivery to requirements
+
+Before decomposing work, load `requirements-traceability-auditor` when it is
+available. It owns the frozen requirement set, the commit-to-requirement
+binding, and the computed delivery status; this skill owns the domain work.
+
+Consequences that hold for every unit dispatched from here:
+
+- A unit exists to advance a recorded requirement. If it advances none, either
+  record the requirement first or park the idea — do not build it unnamed.
+- Every commit names its requirement. Completion is read from the auditor's
+  computed status, never asserted from a worker's report or your own judgement.
+- New scope discovered mid-flight goes to the backlog, or enters through a dated
+  amendment. It is never absorbed silently into the open milestone.
+
+If that skill is unavailable, keep the same discipline manually: state which
+recorded requirement each unit serves, and report anything unevidenced as
+`UNVERIFIED` rather than complete.
+
 ## Final self-check
 
 - Did the investigation inspect the active runtime version, not only source?

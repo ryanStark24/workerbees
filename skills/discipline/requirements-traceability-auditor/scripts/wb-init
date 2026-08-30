@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# Wire WorkerBees scope governance into a project so every agent obeys it.
+#
+#   wb-init [project-path] [--hosts claude,codex,cursor,antigravity] [--wip-limit N]
+#
+# Idempotent and non-destructive: existing files are never overwritten, and an
+# existing commit-msg hook is backed up before replacement.
+set -euo pipefail
+
+PKG=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+project=""
+hosts="claude,codex,cursor,antigravity"
+wip=5
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --hosts) hosts=${2:?--hosts requires a value}; shift 2 ;;
+        --wip-limit) wip=${2:?--wip-limit requires a value}; shift 2 ;;
+        -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+        -*) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
+        *) project=$1; shift ;;
+    esac
+done
+[ -n "$project" ] || project=$(pwd)
+project=$(CDPATH= cd -- "$project" && pwd)
+git -C "$project" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    || { printf 'error: not a git work tree: %s\n' "$project" >&2; exit 2; }
+
+say() { printf '  %s\n' "$*"; }
+printf 'wb-init  %s\n' "$project"
+
+# 1. Templates -- never overwrite an existing file.
+for tpl in REQUIREMENTS.md BACKLOG.md; do
+    if [ -e "$project/$tpl" ]; then
+        say "kept existing $tpl"
+    else
+        cp "$PKG/templates/$tpl" "$project/$tpl"
+        say "created $tpl"
+    fi
+done
+
+# 2. commit-msg hook -- the one mechanism every host obeys.
+# Resolve the real hook directory: honour core.hooksPath, and handle worktrees
+# where .git is a file and hooks live in the shared common directory.
+hookdir=$(git -C "$project" config --get core.hooksPath 2>/dev/null || true)
+if [ -z "$hookdir" ]; then
+    hookdir=$(git -C "$project" rev-parse --git-path hooks)
+fi
+case "$hookdir" in
+    /*) ;;
+    *) hookdir="$project/$hookdir" ;;
+esac
+mkdir -p "$hookdir"
+if [ "$(git -C "$project" rev-parse --git-common-dir)" != "$(git -C "$project" rev-parse --git-dir)" ]; then
+    say "note: this is a worktree; the hook is shared with every worktree of this repository"
+fi
+if [ -e "$hookdir/commit-msg" ] && ! grep -q 'WorkerBees commit-msg hook' "$hookdir/commit-msg" 2>/dev/null; then
+    cp "$hookdir/commit-msg" "$hookdir/commit-msg.pre-workerbees"
+    say "backed up existing commit-msg to commit-msg.pre-workerbees"
+fi
+cp "$PKG/scripts/commit-msg" "$hookdir/commit-msg"
+chmod +x "$hookdir/commit-msg"
+say "installed ${hookdir#$project/}/commit-msg"
+
+# 3. Agent instructions -- AGENTS.md covers Codex/Cursor/Antigravity, CLAUDE.md Claude Code.
+for doc in AGENTS.md CLAUDE.md; do
+    if [ -f "$project/$doc" ] && grep -q 'Scope governance (non-negotiable)' "$project/$doc"; then
+        say "kept $doc (already governed)"
+    else
+        printf '\n' >> "$project/$doc"
+        cat "$PKG/templates/AGENTS.md.snippet" >> "$project/$doc"
+        say "appended scope governance to $doc"
+    fi
+done
+
+# 4. SessionStart reminder per host.
+remind="$PKG/scripts/wb-remind"
+IFS=',' read -r -a host_list <<< "$hosts"
+for host in "${host_list[@]}"; do
+    case "$host" in
+        claude)
+            mkdir -p "$project/.claude"
+            python3 - "$project/.claude/settings.json" "$remind" <<'PY'
+import json, os, sys
+path, remind = sys.argv[1], sys.argv[2]
+data = {}
+if os.path.isfile(path):
+    try:
+        data = json.load(open(path))
+    except (ValueError, OSError):
+        data = {}
+hooks = data.setdefault("hooks", {})
+entries = hooks.setdefault("SessionStart", [])
+if not any(remind in json.dumps(e) for e in entries):
+    entries.append({"hooks": [{"type": "command", "command": remind}]})
+json.dump(data, open(path, "w"), indent=2)
+PY
+            say "wired Claude Code SessionStart (.claude/settings.json)"
+            ;;
+        cursor)
+            mkdir -p "$project/.cursor"
+            python3 - "$project/.cursor/hooks.json" "$remind" <<'PY'
+import json, os, sys
+path, remind = sys.argv[1], sys.argv[2]
+data = {"version": 1, "hooks": {}}
+if os.path.isfile(path):
+    try:
+        data = json.load(open(path))
+    except (ValueError, OSError):
+        pass
+data.setdefault("version", 1)
+entries = data.setdefault("hooks", {}).setdefault("sessionStart", [])
+if not any(remind in json.dumps(e) for e in entries):
+    entries.append({"command": remind})
+json.dump(data, open(path, "w"), indent=2)
+PY
+            say "wired Cursor sessionStart (.cursor/hooks.json)"
+            ;;
+        antigravity)
+            mkdir -p "$project/.agents"
+            python3 - "$project/.agents/hooks.json" "$remind" <<'PY'
+import json, os, sys
+path, remind = sys.argv[1], sys.argv[2]
+data = {}
+if os.path.isfile(path):
+    try:
+        data = json.load(open(path))
+    except (ValueError, OSError):
+        data = {}
+entries = data.setdefault("PreInvocation", [])
+if not any(remind in json.dumps(e) for e in entries):
+    entries.append({"type": "command", "command": remind})
+json.dump(data, open(path, "w"), indent=2)
+PY
+            say "wired Antigravity PreInvocation (.agents/hooks.json)"
+            ;;
+        codex)
+            mkdir -p "$project/.codex"
+            # Merge, never truncate: an existing hooks.json may carry unrelated
+            # blocks (PreToolUse and friends) that are none of our business.
+            # The path also goes through json.dump rather than a heredoc, so an
+            # install path containing a quote or backslash stays valid JSON.
+            python3 - "$project/.codex/hooks.json" "$remind" <<'PY'
+import json, os, sys
+path, remind = sys.argv[1], sys.argv[2]
+data = {}
+if os.path.isfile(path):
+    try:
+        data = json.load(open(path))
+    except (ValueError, OSError):
+        data = {}
+if not isinstance(data, dict):
+    data = {}
+entries = data.setdefault("SessionStart", [])
+if not any(remind in json.dumps(e) for e in entries):
+    entries.append({"hooks": [{"command": remind}]})
+json.dump(data, open(path, "w"), indent=2)
+PY
+            say "wired Codex SessionStart (.codex/hooks.json) -- verify against your Codex version"
+            ;;
+        *) printf '  warning: unknown host %s (skipped)\n' "$host" >&2 ;;
+    esac
+done
+
+cat <<MSG
+
+  Next:
+    1. Edit REQUIREMENTS.md. Freeze a SMALL set -- five, not twenty-five.
+    2. Commit it, then record that commit sha in the "Frozen at:" field.
+    3. Put everything else in BACKLOG.md.
+    4. Check progress any time:
+         python3 $PKG/scripts/wb_trace.py "$project" --wip-limit $wip
+MSG

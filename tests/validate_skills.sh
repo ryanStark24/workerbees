@@ -52,7 +52,9 @@ while IFS= read -r file; do
         general:salesforce-*) fail "Salesforce skill is misplaced in general category: $package_dir" ;;
         salesforce:salesforce-*) ;;
         salesforce:*) fail "Non-Salesforce skill is misplaced in Salesforce category: $package_dir" ;;
+        discipline:salesforce-*) fail "Salesforce skill is misplaced in discipline category: $package_dir" ;;
         general:*) ;;
+        discipline:*) ;;
         *) fail "unknown skill category: $category" ;;
     esac
 
@@ -110,7 +112,7 @@ if [ "$MODE" = "--safety-only" ]; then
     exit 0
 fi
 
-[ "$skill_count" -eq 23 ] || fail "expected 23 skill packages, found $skill_count"
+[ "$skill_count" -eq 24 ] || fail "expected 24 skill packages, found $skill_count"
 [ "$omnistudio_count" -eq 12 ] || fail "expected 12 OmniStudio skill packages, found $omnistudio_count"
 [ "$omnistudio_lifecycle_count" -eq 11 ] || fail "expected 11 OmniStudio lifecycle skills, found $omnistudio_lifecycle_count"
 [ "$(sort "$names_file" | uniq -d | wc -l | tr -d ' ')" -eq 0 ] || fail "duplicate skill names"
@@ -154,4 +156,17 @@ for investigation_file in "$general_investigation" "$sf_investigation"; do
 done
 grep -q 'Required capability' "$sf_investigation" || fail "OmniStudio investigation complement routing is not capability-first"
 
-printf 'PASS: 23 skill packages validated\n'
+for lead in "$SKILLS_DIR"/general/*-lead-orchestrator/SKILL.md "$SKILLS_DIR"/salesforce/salesforce-omnistudio-*-lead-orchestrator/SKILL.md; do
+    grep -q 'Bind delivery to requirements' "$lead" || fail "lifecycle lead does not bind delivery to requirements: $lead"
+    grep -q 'requirements-traceability-auditor' "$lead" || fail "lifecycle lead does not name the auditor: $lead"
+done
+
+discipline_dir="$SKILLS_DIR/discipline/requirements-traceability-auditor"
+[ -x "$discipline_dir/scripts/wb_trace.py" ] || fail "traceability auditor is not executable"
+[ -x "$discipline_dir/scripts/commit-msg" ] || fail "commit-msg hook is not executable"
+[ -f "$discipline_dir/templates/REQUIREMENTS.md" ] || fail "missing requirements template"
+[ -f "$discipline_dir/references/status-model.md" ] || fail "missing status model reference"
+grep -q 'DECLARED_NOT_EVIDENCED' "$discipline_dir/references/status-model.md" || fail "status model lacks declared-not-evidenced finding"
+grep -Eiq 'does not prove|not replace' "$discipline_dir/SKILL.md" || fail "auditor skill does not state its semantic limits"
+
+printf 'PASS: 24 skill packages validated\n'

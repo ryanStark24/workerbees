@@ -1,0 +1,30 @@
+
+<!-- WorkerBees scope governance. Read by Codex, Cursor, and Antigravity via
+     AGENTS.md; mirror into CLAUDE.md for Claude Code. Keep both in sync. -->
+
+## Scope governance (non-negotiable)
+
+This project runs a frozen requirement set. Delivery status is computed from
+repository evidence, never asserted.
+
+1. **`REQUIREMENTS.md` is the source of truth for what is being built.** It was
+   frozen before implementation. Do not edit it to match the code.
+2. **Every commit names its requirement** in a trailer: `Req: R-002`. Work that
+   serves no recorded requirement uses `Req: none (reason)` and is reported as
+   drift. The `commit-msg` hook enforces this; do not bypass it with
+   `--no-verify`.
+3. **New ideas go to `BACKLOG.md`, never into `REQUIREMENTS.md`.** Admitting
+   scope to the open milestone requires closing a requirement or recording a
+   dated amendment. If the user proposes new scope mid-milestone: state the
+   current position, say what admitting it costs, and offer the backlog. If they
+   reaffirm, record the amendment and build it in full. Do not refuse, and do not
+   silently comply.
+4. **Never report work complete on your own judgement.** Run the auditor and
+   quote it:
+   ```
+   python3 <workerbees>/skills/discipline/requirements-traceability-auditor/scripts/wb_trace.py . --wip-limit 5
+   ```
+   A requirement is done when the auditor says `DONE`, not when you believe it is.
+5. **A green auditor run is not proof of correctness.** It proves a requirement
+   was addressed and gated, never that the behaviour is right. Say so when
+   reporting.
