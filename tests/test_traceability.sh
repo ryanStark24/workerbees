@@ -150,6 +150,31 @@ grep -Eq '^  R-001  DONE +1 ' <<<"$out" \
 grep -q "Merge branch" <<<"$out" \
     && fail "merge commits should not be reported as untracked drift"
 
+# EVIDENCED_UNTRACED is delivered work whose commits predate the trailer rule.
+# No future commit can name it without rewriting history, so counting it as open
+# makes the WIP limit unclearable -- an alarm that can never go off is an alarm
+# people stop reading.
+wip="$TEST_ROOT/wip"
+git init -q "$wip"
+git -C "$wip" config user.email t@example.com
+git -C "$wip" config user.name Tester
+printf '# Requirements\n- [ ] **R-001**: delivered and traced\n- [ ] **R-002**: delivered before the trailer rule\n- [ ] **R-003**: delivered before the trailer rule\n' \
+    > "$wip/REQUIREMENTS.md"
+printf -- '- [x] G1: R-001 holds.\n  EVIDENCE: OK\n\n- [x] G2: R-002 holds.\n  EVIDENCE: OK\n\n- [x] G3: R-003 holds.\n  EVIDENCE: OK\n' \
+    > "$wip/GATES.md"
+git -C "$wip" add . && git -C "$wip" commit -q -m "feat: deliver" -m "Req: R-001"
+
+out=$(python3 "$TRACE" "$wip" --wip-limit 1 2>&1) || true
+grep -q 'EVIDENCED_UNTRACED=2' <<<"$out" || fail "fixture did not produce two EVIDENCED_UNTRACED requirements"
+grep -q 'WIP_EXCEEDED' <<<"$out" \
+    && fail "delivered-but-untraced work counted against the WIP limit, which nothing can ever clear"
+
+# genuinely open work still trips the limit
+printf -- '- [ ] **R-004**: not started\n- [ ] **R-005**: not started\n' >> "$wip/REQUIREMENTS.md"
+out=$(python3 "$TRACE" "$wip" --wip-limit 1 2>&1) || true
+grep -q 'WIP_EXCEEDED' <<<"$out" \
+    || fail "the WIP limit stopped firing on genuinely open requirements"
+
 # ---------- scope governance ----------
 scope="$TEST_ROOT/scope"
 git init -q "$scope"
