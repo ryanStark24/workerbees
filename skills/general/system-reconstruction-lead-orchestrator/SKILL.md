@@ -78,6 +78,26 @@ Audit every unit for revision and environment provenance, source/runtime corrobo
 
 Produce an architecture map, component ownership, data and contract catalog, critical sequence journeys, environment and deployment model, operational runbook, failure and recovery guide, glossary, evidence index, and known-unknowns register. Keep generated reference separate from human-authored explanation when appropriate.
 
+
+## Bind delivery to requirements
+
+Before decomposing work, load `requirements-traceability-auditor` when it is
+available. It owns the frozen requirement set, the commit-to-requirement
+binding, and the computed delivery status; this skill owns the domain work.
+
+Consequences that hold for every unit dispatched from here:
+
+- A unit exists to advance a recorded requirement. If it advances none, either
+  record the requirement first or park the idea — do not build it unnamed.
+- Every commit names its requirement. Completion is read from the auditor's
+  computed status, never asserted from a worker's report or your own judgement.
+- New scope discovered mid-flight goes to the backlog, or enters through a dated
+  amendment. It is never absorbed silently into the open milestone.
+
+If that skill is unavailable, keep the same discipline manually: state which
+recorded requirement each unit serves, and report anything unevidenced as
+`UNVERIFIED` rather than complete.
+
 ## Final self-check
 
 - Can a new maintainer identify source of truth and safe change boundaries?

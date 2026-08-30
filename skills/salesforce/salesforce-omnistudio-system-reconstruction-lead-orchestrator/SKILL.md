@@ -50,6 +50,26 @@ Report measured totals for discovered, parsed, documented, unreachable, dynamic,
 
 Use `PASS`, `FAIL`, `BLOCKED`, or `UNVERIFIED`. Documentation is complete only against a declared inventory and provenance boundary.
 
+
+## Bind delivery to requirements
+
+Before decomposing work, load `requirements-traceability-auditor` when it is
+available. It owns the frozen requirement set, the commit-to-requirement
+binding, and the computed delivery status; this skill owns the domain work.
+
+Consequences that hold for every unit dispatched from here:
+
+- A unit exists to advance a recorded requirement. If it advances none, either
+  record the requirement first or park the idea — do not build it unnamed.
+- Every commit names its requirement. Completion is read from the auditor's
+  computed status, never asserted from a worker's report or your own judgement.
+- New scope discovered mid-flight goes to the backlog, or enters through a dated
+  amendment. It is never absorbed silently into the open milestone.
+
+If that skill is unavailable, keep the same discipline manually: state which
+recorded requirement each unit serves, and report anything unevidenced as
+`UNVERIFIED` rather than complete.
+
 ## Final self-check
 
 - Does every public journey and reusable asset have an evidence-linked contract?

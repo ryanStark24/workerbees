@@ -156,6 +156,11 @@ for investigation_file in "$general_investigation" "$sf_investigation"; do
 done
 grep -q 'Required capability' "$sf_investigation" || fail "OmniStudio investigation complement routing is not capability-first"
 
+for lead in "$SKILLS_DIR"/general/*-lead-orchestrator/SKILL.md "$SKILLS_DIR"/salesforce/salesforce-omnistudio-*-lead-orchestrator/SKILL.md; do
+    grep -q 'Bind delivery to requirements' "$lead" || fail "lifecycle lead does not bind delivery to requirements: $lead"
+    grep -q 'requirements-traceability-auditor' "$lead" || fail "lifecycle lead does not name the auditor: $lead"
+done
+
 discipline_dir="$SKILLS_DIR/discipline/requirements-traceability-auditor"
 [ -x "$discipline_dir/scripts/wb_trace.py" ] || fail "traceability auditor is not executable"
 [ -x "$discipline_dir/scripts/commit-msg" ] || fail "commit-msg hook is not executable"
