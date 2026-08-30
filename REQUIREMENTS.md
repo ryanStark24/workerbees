@@ -72,6 +72,31 @@ any work they orchestrate is requirement-bound by default.
       host discovery contract, proven by the existing installer tests across all
       four targets and every group.
 
+### Coverage of the pre-existing families (delivered before the trailer convention)
+
+Recorded so the existing gates prove something named. These describe work already
+shipped; the auditor reports them `EVIDENCED_UNTRACED` because a gate evidences
+each one but no commit names it. That is accurate, not a defect.
+
+- [ ] **R-009**: A vendor-neutral lifecycle skill exists for each major
+      engineering lifecycle domain, and each composes with the swarm execution
+      substrate while retaining a sequential fallback when no workers exist.
+- [ ] **R-010**: A Salesforce OmniStudio counterpart exists for each lifecycle
+      domain, and each classifies its environment through the shared router
+      before selecting a transport or acting on an asset.
+- [ ] **R-011**: OmniStudio migration and business-record ETL have unambiguous,
+      non-overlapping ownership, and migration requires behavioral-equivalence
+      evidence gathered in a clean validation sandbox.
+- [ ] **R-012**: Skills that touch production, live data, or destructive
+      operations state their authorization, hazardous-operation, and recovery
+      boundaries explicitly.
+- [ ] **R-013**: Every skill package installs completely and identically across
+      all four hosts at both scopes, without clobbering an existing installation
+      or leaving stale files behind.
+- [ ] **R-014**: Repository claims are backed by reproducible evidence —
+      structural validation, routing scenarios, two-platform CI, explicit
+      candidate status, documented compatibility limits, and a license.
+
 ### M2 non-goals
 
 - **Consolidating the Salesforce variants.** Measured and rejected: 734 lines
@@ -92,3 +117,9 @@ touches; work in flight against those requirements must be re-baselined.
 | 2026-08-30 | R-006 | added | M2: auditor reported ORPHAN_GATE=12; pre-existing skills have no recorded requirements | owner |
 | 2026-08-30 | R-007 | added | M2: make orchestrated work requirement-bound by default | owner |
 | 2026-08-30 | R-008 | added | M2: protect the install contract while restructuring | owner |
+| 2026-08-30 | R-009 | added | M2/R-006: name what the general lifecycle family delivers | owner |
+| 2026-08-30 | R-010 | added | M2/R-006: name what the OmniStudio family delivers | owner |
+| 2026-08-30 | R-011 | added | M2/R-006: name the migration/ETL ownership boundary | owner |
+| 2026-08-30 | R-012 | added | M2/R-006: name the safety-boundary guarantee | owner |
+| 2026-08-30 | R-013 | added | M2/R-006: name the installation guarantee | owner |
+| 2026-08-30 | R-014 | added | M2/R-006: name the evidence-reproducibility guarantee | owner |

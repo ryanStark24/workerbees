@@ -6,10 +6,11 @@ one status per requirement. Status is computed from evidence that exists in the
 repository; it is never asserted by an agent and never inferred from confidence.
 
 Statuses
-    NOT_STARTED  no commit references the requirement
-    PARTIAL      commits exist, but no gate claims the requirement
-    UNVERIFIED   a gate claims it, but the gate carries no evidence
-    DONE         commits, a checked gate, and non-empty evidence all present
+    NOT_STARTED        no commit references it and no gate evidences it
+    EVIDENCED_UNTRACED  a gate evidences it, but no commit names it (pre-convention work)
+    PARTIAL             commits exist, but no gate claims the requirement
+    UNVERIFIED          a gate claims it, but the gate carries no evidence
+    DONE                commits, a checked gate, and non-empty evidence all present
 
 Also reported
     UNTRACKED    commits carrying no requirement reference (drift)
@@ -184,12 +185,15 @@ def parse_commits(repo: str, rev_range: str, limit: int) -> list[dict]:
 
 
 def classify(req: dict, gates_by_id: dict[str, dict]) -> str:
-    if not req["commits"]:
-        return "NOT_STARTED"
     claiming = [gates_by_id[g] for g in req["gates"] if g in gates_by_id]
+    evidenced = any(g["checked"] and g["evidence"] for g in claiming)
+    if not req["commits"]:
+        # Work predating the trailer convention: a gate proves it, but no commit
+        # names it. Honest about both halves rather than calling it not started.
+        return "EVIDENCED_UNTRACED" if evidenced else "NOT_STARTED"
     if not claiming:
         return "PARTIAL"
-    if not any(g["checked"] and g["evidence"] for g in claiming):
+    if not evidenced:
         return "UNVERIFIED"
     return "DONE"
 
@@ -270,12 +274,14 @@ def main() -> int:
     print(f"  commits:      {len(commits)} scanned{' in ' + args.rev_range if args.rev_range else ''}")
     print()
     width = max((len(r) for r in reqs), default=6)
-    print(f"  {'ID'.ljust(width)}  {'STATUS'.ljust(11)}  {'CMTS':>4}  GATES     REQUIREMENT")
-    print(f"  {'-' * width}  {'-' * 11}  ----  --------  {'-' * 40}")
+    swidth = max(len(s) for _, s, _ in rows) if rows else 11
+    swidth = max(swidth, 6)
+    print(f"  {'ID'.ljust(width)}  {'STATUS'.ljust(swidth)}  {'CMTS':>4}  GATES     REQUIREMENT")
+    print(f"  {'-' * width}  {'-' * swidth}  ----  --------  {'-' * 40}")
     for rid, status, req in rows:
         gate_list = ",".join(sorted(set(req["gates"]))) or "-"
         flag = "  <- declared done" if req["declared_done"] and status != "DONE" else ""
-        print(f"  {rid.ljust(width)}  {status.ljust(11)}  {len(req['commits']):>4}  "
+        print(f"  {rid.ljust(width)}  {status.ljust(swidth)}  {len(req['commits']):>4}  "
               f"{gate_list[:8].ljust(8)}  {req['text'][:40]}{flag}")
 
     print()
