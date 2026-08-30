@@ -175,6 +175,43 @@ out=$(python3 "$TRACE" "$wip" --wip-limit 1 2>&1) || true
 grep -q 'WIP_EXCEEDED' <<<"$out" \
     || fail "the WIP limit stopped firing on genuinely open requirements"
 
+# a project's own id scheme must work end to end. REQUIREMENTS.md accepts any
+# PREFIX-digits shape, so a project using US- or AC- ids parses fine; if the
+# reference patterns only know W/R/REQ/FR, every one of them reads NOT_STARTED
+# forever and the hook refuses the matching commit.
+ids="$TEST_ROOT/idscheme"
+git init -q "$ids"
+git -C "$ids" config user.email t@example.com
+git -C "$ids" config user.name Tester
+cp "$HOOK" "$ids/.git/hooks/commit-msg"
+chmod +x "$ids/.git/hooks/commit-msg"
+printf '# Requirements\n- [ ] **US-12**: a user story\n- [ ] **AC-01**: an acceptance criterion\n' \
+    > "$ids/REQUIREMENTS.md"
+printf -- '- [x] G1: US-12 holds.\n  EVIDENCE: OK\n' > "$ids/GATES.md"
+git -C "$ids" add . && git -C "$ids" commit -q -m "docs: baseline" -m "Req: none (fixture)"
+
+echo 1 > "$ids/f"; git -C "$ids" add f
+git -C "$ids" commit -q -m "feat: deliver the story" -m "Req: US-12" \
+    || fail "the commit-msg hook rejected a project's own id scheme (US-12)"
+
+out=$(python3 "$TRACE" "$ids" 2>&1) || true
+grep -Eq '^  US-12  DONE' <<<"$out" \
+    || fail "a commit naming US-12 did not bind to it; the id scheme is unsupported end to end"
+grep -Eq '^  AC-01  NOT_STARTED' <<<"$out" \
+    || fail "AC-01 should be NOT_STARTED"
+
+# a typo inside a declared prefix must still be caught
+echo 2 > "$ids/g"; git -C "$ids" add g
+git -C "$ids" commit -q -m "feat: typo" -m "Req: US-99"
+out=$(python3 "$TRACE" "$ids" 2>&1) || true
+grep -q 'UNKNOWN_REF' <<<"$out" || fail "a reference to an undeclared US-99 was not reported"
+
+# prose that merely looks like an id must not bind
+echo 3 > "$ids/h"; git -C "$ids" add h
+git -C "$ids" commit -q -m "chore: encoding" -m "Handles UTF-8 and ISO-8601 correctly." -m "Req: none (prose)"
+out=$(python3 "$TRACE" "$ids" 2>&1) || true
+grep -q 'UTF-8' <<<"$out" && fail "UTF-8 in a commit body was treated as a requirement id"
+
 # ---------- scope governance ----------
 scope="$TEST_ROOT/scope"
 git init -q "$scope"

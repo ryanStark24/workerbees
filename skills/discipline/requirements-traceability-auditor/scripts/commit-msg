@@ -20,7 +20,10 @@ esac
 # Comment lines are stripped by git; ignore them here too.
 body=$(grep -v '^#' "$MSG_FILE" || true)
 
-ID_PATTERN='(W[0-9]+[a-z]?|R|REQ|FR)-[0-9]+'
+# Any PREFIX-digits shape. The pattern only ever applies after a Req:/Refs:
+# trailer, so there is no prose to over-match, and a project is free to use
+# its own scheme (US-12, AC-01) rather than one this hook happens to know.
+ID_PATTERN='[A-Za-z][A-Za-z0-9]*-[0-9]+'
 
 if printf '%s\n' "$body" | grep -qEi "^[[:space:]]*(Req|Requirement|Refs|Closes)[[:space:]]*:[[:space:]]*.*${ID_PATTERN}"; then
     exit 0
