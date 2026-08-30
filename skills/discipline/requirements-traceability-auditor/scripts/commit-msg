@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# WorkerBees commit-msg hook: require a requirement reference on every commit.
+#
+# Install:  cp <this file> .git/hooks/commit-msg && chmod +x .git/hooks/commit-msg
+# Bypass:   git commit --no-verify   (use deliberately; it is recorded as drift)
+#
+# Enforced at the commit, so it applies equally to Claude, Codex, Gemini, and
+# commits typed by hand. Agents cannot route around it by claiming completion.
+set -euo pipefail
+
+MSG_FILE="${1:?commit-msg hook requires a message file}"
+[ -f "$MSG_FILE" ] || exit 0
+
+# Never block merges, reverts, fixups, or squashes.
+first_line=$(sed -n '1p' "$MSG_FILE")
+case "$first_line" in
+    Merge\ *|Revert\ *|fixup!\ *|squash!\ *|amend!\ *) exit 0 ;;
+esac
+
+# Comment lines are stripped by git; ignore them here too.
+body=$(grep -v '^#' "$MSG_FILE" || true)
+
+ID_PATTERN='(W[0-9]+[a-z]?|R|REQ|FR)-[0-9]+'
+
+if printf '%s\n' "$body" | grep -qEi "^[[:space:]]*(Req|Requirement|Refs|Closes)[[:space:]]*:[[:space:]]*.*${ID_PATTERN}"; then
+    exit 0
+fi
+
+# Allow an exemption trailer for genuinely unscoped work, but require a reason.
+if printf '%s\n' "$body" | grep -qEi '^[[:space:]]*Req[[:space:]]*:[[:space:]]*none[[:space:]]*\(.+\)[[:space:]]*$'; then
+    exit 0
+fi
+
+cat >&2 <<'MSG'
+commit rejected: no requirement reference.
+
+Every commit must name the requirement it advances, so delivery status can be
+computed from evidence rather than asserted. Add a trailer:
+
+    Req: W1-02
+
+Several are allowed:
+
+    Req: W1-02, W1-03
+
+If the commit genuinely serves no recorded requirement, say so with a reason —
+this is recorded as drift and reported by wb-trace:
+
+    Req: none (repo tooling, not product scope)
+
+If the work is real but the requirement was never written down, that is the
+finding: add it to REQUIREMENTS.md as a dated amendment first.
+MSG
+exit 1
