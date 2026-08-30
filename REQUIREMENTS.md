@@ -153,6 +153,9 @@ never written as requirements, which is itself the finding.
 - [ ] **R-020**: The gate suite is proven to reproduce on a machine that has
       never seen this project, by CI executing on both platforms. Never yet run:
       the branch has no upstream and CI has zero executions.
+- [ ] **R-021**: The Codex hook configuration is confirmed against a real Codex
+      installation. It is currently a reading of published documentation plus one
+      observed project config, and has never been executed by Codex itself.
 - [ ] **R-022**: The governance is validated on a project that is not this one,
       by running `wb-init` against a real repository and reporting what the
       auditor finds there.
@@ -183,3 +186,4 @@ touches; work in flight against those requirements must be re-baselined.
 | 2026-08-30 | R-022 | added | M1 residual: governance never run against a real project | owner |
 | 2026-08-30 | R-019 | amended | Codex review excluded by owner; the independent technical and functional review halves are dropped from the merge gate | owner |
 | 2026-08-30 | R-021 | withdrawn | Codex review excluded by owner, so hook verification has no owner. `wb-init` already prints "verify against your Codex version", so R-004's wiring claim stays honest without this requirement. Recorded in BACKLOG.md Declined | owner |
+| 2026-08-30 | R-021 | reinstated | Withdrawn earlier as unowned. First contact with a real project under R-022 immediately found wb-init wiring Codex at the wrong nesting level — the exact check this requirement names. The withdrawal was wrong | owner |
