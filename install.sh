@@ -30,7 +30,7 @@ Targets:
 Options:
   --all                  Install every target.
   --target TARGET        Install one target; may be repeated.
-  --group GROUP          Install general, salesforce, or all skills; may be repeated (default: all).
+  --group GROUP          Install general, salesforce, discipline, or all skills; may be repeated (default: all).
   --scope SCOPE          Install at project or global scope; may be repeated.
                          Without this flag, Cursor uses project scope and other targets use global scope.
   --project-dir PATH     Project/workspace root for project scope (default: current directory).
@@ -69,9 +69,10 @@ add_group() {
         all)
             add_group general
             add_group salesforce
+            add_group discipline
             return 0
             ;;
-        general|salesforce) ;;
+        general|salesforce|discipline) ;;
         *) die "Unknown group: $candidate" ;;
     esac
     for existing in "${SELECTED_GROUPS[@]:-}"; do
@@ -160,6 +161,7 @@ fi
 [ -d "$SOURCE_DIR" ] || die "Skill source directory not found: $SOURCE_DIR"
 [ -d "$SOURCE_DIR/general" ] || die "General skill source directory not found: $SOURCE_DIR/general"
 [ -d "$SOURCE_DIR/salesforce" ] || die "Salesforce skill source directory not found: $SOURCE_DIR/salesforce"
+[ -d "$SOURCE_DIR/discipline" ] || die "Discipline skill source directory not found: $SOURCE_DIR/discipline"
 
 frontmatter_value() {
     local key=$1
