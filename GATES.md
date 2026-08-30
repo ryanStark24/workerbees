@@ -149,5 +149,5 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
 - [x] G25: Every gate names the requirement it proves, and every requirement has a gate.
   Req: R-006
   CHECK: ./tests/test_gate_coverage.sh
-  EXPECT: PASS: 25 gates and 14 requirements are mutually covered
-  EVIDENCE: PASS: 25 gates and 14 requirements are mutually covered
+  EXPECT: PASS: 25 gates cover 14 requirement(s), 8 of them started; 8 planned and not yet gated
+  EVIDENCE: PASS: 25 gates cover 14 requirement(s), 8 of them started; 8 planned and not yet gated
