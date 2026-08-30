@@ -1,7 +1,7 @@
 # Requirements: WorkerBees delivery discipline (M1)
 
 **Defined:** 2026-08-30
-**Frozen at:** PENDING_FIRST_COMMIT
+**Frozen at:** 552038df511f302bf59eec8122178442ff06c616
 **Core Value:** A project using WorkerBees can answer "is this requirement
 actually delivered?" from repository evidence alone, and cannot quietly grow its
 scope while failing to finish.
