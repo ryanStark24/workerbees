@@ -25,14 +25,14 @@ assert_case() {
     set -e
 
     [ "$status" -eq "$expected_status" ] || fail "$name returned $status, expected $expected_status: $output"
-    printf '%s\n' "$output" | grep -q '"classification": "'"$expected_classification"'"' || fail "$name classification mismatch: $output"
-    printf '%s\n' "$output" | grep -q '"transport": "'"$expected_transport"'"' || fail "$name transport mismatch: $output"
-    printf '%s\n' "$output" | grep -q '"action": "'"$expected_action"'"' || fail "$name action mismatch: $output"
+    grep -q '"classification": "'"$expected_classification"'"' <<<"$output" || fail "$name classification mismatch: $output"
+    grep -q '"transport": "'"$expected_transport"'"' <<<"$output" || fail "$name transport mismatch: $output"
+    grep -q '"action": "'"$expected_action"'"' <<<"$output" || fail "$name action mismatch: $output"
 }
 
 self_test_output=$(python3 "$CLASSIFIER" --self-test)
-printf '%s\n' "$self_test_output" | grep -q '"passed": 7' || fail "classifier self-test did not pass 7 fixtures"
-printf '%s\n' "$self_test_output" | grep -q '"failures": \[\]' || fail "classifier self-test reported failures"
+grep -q '"passed": 7' <<<"$self_test_output" || fail "classifier self-test did not pass 7 fixtures"
+grep -q '"failures": \[\]' <<<"$self_test_output" || fail "classifier self-test reported failures"
 
 assert_case standard_native \
     '{"runtime":"standard","designer":"standard","storage_model":"standard","object_family":"standard","metadata_enabled":true,"interaction_config":"standard","source_representation":"metadata"}' \

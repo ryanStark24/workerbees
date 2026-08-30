@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate shell syntax
-        run: bash -n install.sh tests/*.sh
+        run: bash -n install.sh tests/*.sh skills/discipline/*/scripts/commit-msg skills/discipline/*/scripts/wb-remind skills/discipline/*/scripts/wb-init
       - name: Validate skill packages
         run: ./tests/validate_skills.sh
       - name: Validate safety invariants
@@ -27,5 +27,7 @@ jobs:
         run: ./tests/test_installer.sh
       - name: Test routing scenarios
         run: ./tests/test_routing_scenarios.sh
+      - name: Test requirements traceability
+        run: ./tests/test_traceability.sh
       - name: Verify gate evidence
         run: ./tests/test_gate_evidence.sh
