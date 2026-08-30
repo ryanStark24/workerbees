@@ -42,5 +42,5 @@ done
 # silently matching nothing. Unlike a count derived from commit history, this
 # one only moves when somebody edits GATES.md in the same change, so it fails
 # loudly and immediately rather than decaying underneath unrelated work.
-[ "$gate_count" -eq 26 ] || fail "expected 26 gates, found $gate_count"
-printf 'PASS: 26 gate commands and recorded evidence agree\n'
+[ "$gate_count" -eq 28 ] || fail "expected 28 gates, found $gate_count"
+printf 'PASS: 28 gate commands and recorded evidence agree\n'

@@ -157,3 +157,15 @@ Scope: Ship eleven vendor-neutral lifecycle skills, eleven Salesforce OmniStudio
   CHECK: for f in .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/hooks.json; do test -f "$f" || { echo "missing $f"; exit 1; }; done; ! grep -nE '"command"[[:space:]]*:[[:space:]]*"(/|[^"]*//)' .claude/settings.json .cursor/hooks.json .agents/hooks.json .codex/hooks.json && echo PORTABLE_HOOKS_PASS
   EXPECT: PORTABLE_HOOKS_PASS
   EVIDENCE: PORTABLE_HOOKS_PASS
+
+- [x] G27: The milestone landed on master through a pull request merge, not a direct push.
+  Req: R-019
+  CHECK: test -f .workerbees/M1-LANDING.md && git merge-base --is-ancestor 80adbcb HEAD && [ "$(git rev-list --parents -n1 80adbcb | wc -w)" -ge 3 ] && grep -q 80adbcb .workerbees/M1-LANDING.md && echo M1_LANDED_PASS
+  EXPECT: M1_LANDED_PASS
+  EVIDENCE: M1_LANDED_PASS
+
+- [x] G28: CI runs every suite on both platforms with the history the gates need.
+  Req: R-020
+  CHECK: for t in tests/*.sh; do grep -q "$(basename "$t")" .github/workflows/ci.yml || exit 1; done; grep -q ubuntu-latest .github/workflows/ci.yml && grep -q macos-latest .github/workflows/ci.yml && grep -q 'fetch-depth: 0' .github/workflows/ci.yml && grep -q 33314992824 .workerbees/M1-LANDING.md && echo CI_REPRODUCTION_PASS
+  EXPECT: CI_REPRODUCTION_PASS
+  EVIDENCE: CI_REPRODUCTION_PASS
