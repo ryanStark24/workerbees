@@ -28,8 +28,25 @@ import re
 import subprocess
 import sys
 
-# W1-01, W2a-03, R-001, REQ-12, FR-3
-ID = re.compile(r"\b((?:W\d+[a-z]?|R|REQ|FR|REQ)-\d+)\b")
+# W1-01, W2a-03, R-001, REQ-12, FR-3 -- the conventional prefixes. A project
+# may use its own (US-12, AC-01); reference_pattern() widens this to include
+# whatever prefixes REQUIREMENTS.md actually declares. It stays a fixed list
+# rather than "any PREFIX-digits" because it is matched against free prose,
+# where UTF-8 and ISO-8601 would otherwise read as requirement ids.
+BASE_PREFIXES = r"W\d+[a-z]?|R|REQ|FR"
+ID = re.compile(rf"\b((?:{BASE_PREFIXES})-\d+)\b")
+
+
+def reference_pattern(declared: list[str]) -> re.Pattern:
+    """Match the conventional prefixes plus every prefix the project declares.
+
+    Declared prefixes are included so a project's own scheme binds, while an
+    undeclared number under a declared prefix (US-99 where only US-12 exists)
+    still matches and is reported as UNKNOWN_REF rather than silently ignored.
+    """
+    extra = sorted({rid.rsplit("-", 1)[0] for rid in declared if "-" in rid})
+    alts = "|".join([BASE_PREFIXES] + [re.escape(p) for p in extra])
+    return re.compile(rf"\b((?:{alts})-\d+)\b")
 # - [ ] **W1-01**: text     /     - [x] W1-01 - text
 REQ_LINE = re.compile(r"^\s*[-*]\s*\[( |x|X)\]\s*\**([A-Za-z]+\d*[a-z]?-\d+)\**\s*[:\-–]?\s*(.*)$")
 GATE_LINE = re.compile(r"^\s*[-*]\s*\[( |x|X)\]\s*(G\d+)\s*[:\.]?\s*(.*)$")
@@ -258,6 +275,11 @@ def main() -> int:
               "       Expected lines like:  - [ ] **W1-01**: observable statement",
               file=sys.stderr)
         return 2
+
+    # Widen id matching to the schemes this project actually uses, before any
+    # commit or gate is scanned for references.
+    global ID
+    ID = reference_pattern(list(reqs))
 
     gates = parse_gates(gate_path)
     gates_by_id = {g["id"]: g for g in gates}

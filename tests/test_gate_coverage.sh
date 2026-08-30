@@ -10,7 +10,9 @@ import os, re, sys
 
 gates_path, reqs_path, repo = sys.argv[1], sys.argv[2], sys.argv[3]
 
-known = set(re.findall(r'^\s*[-*]\s*\[[ xX]\]\s*\**(R-\d+)',
+# Any PREFIX-digits shape, matching what REQUIREMENTS.md itself accepts, so a
+# project using its own id scheme is not silently seen as having no requirements.
+known = set(re.findall(r'^\s*[-*]\s*\[[ xX]\]\s*\**([A-Za-z][A-Za-z0-9]*-\d+)',
                        open(reqs_path, encoding='utf-8').read(), re.M))
 
 gates, current = [], None
@@ -23,7 +25,7 @@ for line in open(gates_path, encoding='utf-8'):
     if current is None:
         continue
     if re.match(r'^\s*Req:', line):
-        current['reqs'].update(re.findall(r'\bR-\d+\b', line))
+        current['reqs'].update(re.findall(r'\b[A-Za-z][A-Za-z0-9]*-\d+\b', line))
     elif line.strip() and not line.startswith((' ', '\t', '-', '*')):
         current = None
 
