@@ -1,5 +1,11 @@
 {
   "SessionStart": [
-    { "hooks": [ { "command": "/Users/anshulmehta/Documents/workerbees/.claude/worktrees/project-planning-workflow-651c7e/skills/discipline/requirements-traceability-auditor/scripts/wb-remind" } ] }
+    {
+      "hooks": [
+        {
+          "command": "./skills/discipline/requirements-traceability-auditor/scripts/wb-remind"
+        }
+      ]
+    }
   ]
 }
