@@ -156,7 +156,16 @@ def parse_gates(path: str | None) -> list[dict]:
 
 
 def parse_commits(repo: str, rev_range: str, limit: int) -> list[dict]:
-    fmt = f"%H{SEP}%s{SEP}%b"
+    """Commits that can carry delivery evidence.
+
+    Merge commits are skipped. The commit-msg hook exempts them from the trailer
+    rule, so they never carry one, and a merge summary naturally names the
+    requirements its branch touched -- which the fallback below would then read
+    as delivery. Their content is already counted through the commits they
+    merge, so dropping them loses nothing and stops a merge from marking work
+    started that has no commit behind it.
+    """
+    fmt = f"%H{SEP}%s{SEP}%P{SEP}%b"
     args = ["log", f"--format={fmt}%x00"]
     if limit:
         args.append(f"-{limit}")
@@ -172,7 +181,10 @@ def parse_commits(repo: str, rev_range: str, limit: int) -> list[dict]:
         if len(parts) < 2:
             continue
         sha, subject = parts[0], parts[1]
-        body = parts[2] if len(parts) > 2 else ""
+        parents = parts[2].split() if len(parts) > 2 else []
+        body = parts[3] if len(parts) > 3 else ""
+        if len(parents) > 1:
+            continue
         refs: set[str] = set()
         exempt = False
         for line in body.splitlines():
