@@ -109,7 +109,7 @@ each one but no commit names it. That is accurate, not a defect.
 
 ## Milestone 3 — are these skills actually worth having?
 
-**Defined:** 2026-08-30 · **Frozen at:** PENDING_M3_COMMIT
+**Defined:** 2026-08-30 · **Frozen at:** b951e4693e54c2b830eea5635fbfe90c812c2c18
 **Core Value:** Every shipped skill is known to be selected when it is relevant
 and to change what an agent does — or it is deleted.
 
