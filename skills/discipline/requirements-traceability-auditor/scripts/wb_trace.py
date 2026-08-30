@@ -356,10 +356,18 @@ def main() -> int:
         print("\n  SCOPE  no freeze marker found; add '**Frozen at:** <sha>' to "
               "REQUIREMENTS.md at the first implementation commit")
 
-    open_reqs = [rid for rid, status, _ in rows if status != "DONE"]
+    # EVIDENCED_UNTRACED is delivered work whose commits predate the trailer
+    # convention. No future commit can name it without rewriting history, so
+    # counting it as open would leave the limit permanently breached -- and an
+    # alarm that cannot be cleared is one people learn to scroll past.
+    delivered = {"DONE", "EVIDENCED_UNTRACED"}
+    open_reqs = [rid for rid, status, _ in rows if status not in delivered]
+    untraced = [rid for rid, status, _ in rows if status == "EVIDENCED_UNTRACED"]
     if args.wip_limit and len(open_reqs) > args.wip_limit:
         findings += 1
         print(f"\n  WIP_EXCEEDED  {len(open_reqs)} requirements open, limit is {args.wip_limit}")
+        if untraced:
+            print(f"    ({len(untraced)} delivered-but-untraced excluded; they cannot be closed by new work)")
         print("    Finishing beats starting. Close or park work before admitting more.")
 
     mismatched = [r for _, s, r in rows if r["declared_done"] and s != "DONE"]
