@@ -136,18 +136,27 @@ PY
             ;;
         codex)
             mkdir -p "$project/.codex"
-            if [ -f "$project/.codex/hooks.json" ] && grep -q 'wb-remind' "$project/.codex/hooks.json"; then
-                say "kept Codex hooks.json (already wired)"
-            else
-                cat > "$project/.codex/hooks.json" <<JSON
-{
-  "SessionStart": [
-    { "hooks": [ { "command": "$remind" } ] }
-  ]
-}
-JSON
-                say "wired Codex SessionStart (.codex/hooks.json) -- verify against your Codex version"
-            fi
+            # Merge, never truncate: an existing hooks.json may carry unrelated
+            # blocks (PreToolUse and friends) that are none of our business.
+            # The path also goes through json.dump rather than a heredoc, so an
+            # install path containing a quote or backslash stays valid JSON.
+            python3 - "$project/.codex/hooks.json" "$remind" <<'PY'
+import json, os, sys
+path, remind = sys.argv[1], sys.argv[2]
+data = {}
+if os.path.isfile(path):
+    try:
+        data = json.load(open(path))
+    except (ValueError, OSError):
+        data = {}
+if not isinstance(data, dict):
+    data = {}
+entries = data.setdefault("SessionStart", [])
+if not any(remind in json.dumps(e) for e in entries):
+    entries.append({"hooks": [{"command": remind}]})
+json.dump(data, open(path, "w"), indent=2)
+PY
+            say "wired Codex SessionStart (.codex/hooks.json) -- verify against your Codex version"
             ;;
         *) printf '  warning: unknown host %s (skipped)\n' "$host" >&2 ;;
     esac
