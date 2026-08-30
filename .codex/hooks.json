@@ -1,11 +1,13 @@
 {
-  "SessionStart": [
-    {
-      "hooks": [
-        {
-          "command": "./skills/discipline/requirements-traceability-auditor/scripts/wb-remind"
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "./skills/discipline/requirements-traceability-auditor/scripts/wb-remind"
+          }
+        ]
+      }
+    ]
+  }
 }
